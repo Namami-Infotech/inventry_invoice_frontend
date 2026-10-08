@@ -544,9 +544,9 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                   <th className="py-2 px-2 text-right w-20" style={{ borderRight: '1px solid #000000' }}>
                     Rate
                   </th>
-                  <th className="py-2 px-1 text-center w-14" style={{ borderRight: '1px solid #000000' }}>
+                  {/* <th className="py-2 px-1 text-center w-14" style={{ borderRight: '1px solid #000000' }}>
                     per
-                  </th>
+                  </th> */}
                   <th className="py-2 px-3 text-right w-24">
                     Amount
                   </th>
@@ -574,9 +574,9 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                     <td className="py-2 px-2 text-right font-mono" style={{ borderRight: '1px solid #000000' }}>
                       {Number(item.pricePerUnit).toFixed(2)}
                     </td>
-                    <td className="py-2 px-1 text-center font-medium" style={{ borderRight: '1px solid #000000' }}>
+                    {/* <td className="py-2 px-1 text-center font-medium" style={{ borderRight: '1px solid #000000' }}>
                       {item.unit || 'SET'}
-                    </td>
+                    </td> */}
                     <td className="py-2 px-3 text-right font-mono font-bold">
                       {Number(item.taxableAmount).toFixed(2)}
                     </td>
@@ -594,7 +594,6 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                       <td style={{ borderRight: '1px solid #000000' }}></td>
                       <td style={{ borderRight: '1px solid #000000' }}></td>
                       <td style={{ borderRight: '1px solid #000000' }}></td>
-                      <td style={{ borderRight: '1px solid #000000' }}></td>
                       <td className="py-1 px-3 text-right font-mono font-bold">
                         {Number(invoice.totalCgst).toFixed(2)}
                       </td>
@@ -604,7 +603,6 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                       <td className="py-1 px-3 text-right font-bold tracking-wide" style={{ borderRight: '1px solid #000000' }}>
                         OUTPUT SGST
                       </td>
-                      <td style={{ borderRight: '1px solid #000000' }}></td>
                       <td style={{ borderRight: '1px solid #000000' }}></td>
                       <td style={{ borderRight: '1px solid #000000' }}></td>
                       <td style={{ borderRight: '1px solid #000000' }}></td>
@@ -619,7 +617,6 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                     <td className="py-1 px-3 text-right font-bold tracking-wide" style={{ borderRight: '1px solid #000000' }}>
                       OUTPUT IGST
                     </td>
-                    <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
@@ -641,7 +638,6 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                     {totalQty} {items[0]?.unit || 'SET'}
                   </td>
                   <td style={{ borderRight: '1px solid #000000' }}></td>
-                  <td style={{ borderRight: '1px solid #000000' }}></td>
                   <td className="py-2 px-3 text-right font-mono font-bold">
                     ₹ {Number(invoice.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
@@ -649,7 +645,7 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
 
                 {/* AMOUNT IN WORDS & E. & O.E */}
                 <tr style={{ borderBottom: '1px solid #000000' }}>
-                  <td colSpan={5} className="p-2.5 text-xs text-black">
+                  <td colSpan={4} className="p-2.5 text-xs text-black">
                     <span className="text-[10px] text-slate-700 block">Amount Chargeable (in words)</span>
                     <p className="font-bold text-xs text-black mt-0.5">{numberToWords(invoice.grandTotal)}</p>
                   </td>
@@ -660,7 +656,7 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
 
                 {/* HSN/SAC TAX SUMMARY TABLE */}
                 <tr style={{ borderBottom: '1px solid #000000' }}>
-                  <td colSpan={7} className="p-2.5">
+                  <td colSpan={6} className="p-2.5">
                     <table
                       className="w-full text-xs text-black border-collapse"
                       style={{ border: '1px solid #000000', borderCollapse: 'collapse' }}
@@ -789,7 +785,7 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
 
                 {/* DECLARATION & SIGNATURE ROW */}
                 <tr>
-                  <td colSpan={4} className="p-3 text-xs align-top" style={{ borderRight: '1px solid #000000' }}>
+                  <td colSpan={3} className="p-3 text-xs align-top" style={{ borderRight: '1px solid #000000' }}>
                     <span className="font-bold block mb-1">Declaration</span>
                     <p className="text-[11px] leading-relaxed text-slate-800">
                       We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.

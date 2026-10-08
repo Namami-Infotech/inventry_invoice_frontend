@@ -9,7 +9,8 @@ import {
   MessageSquare,
   Smartphone,
   Globe,
-  Loader2
+  Loader2,
+  Copy
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -20,6 +21,7 @@ import {
   formatWhatsAppInvoiceMessage,
   openWhatsAppWeb,
   openWhatsAppApp,
+  openWhatsAppDirect,
   shareInvoiceFile
 } from '../services/shareService';
 import { invoiceService, userService } from '../services/api';
@@ -170,12 +172,43 @@ export default function WhatsAppShareModal({
     state: companySetting?.state || invoice.companyState || 'Delhi',
     gstin: companySetting?.gstin || invoice.companyGstin || '07AEUPM2913G2ZA',
     phone: companySetting?.phoneNo || invoice.companyPhone || '+91 98765 43210',
-    email: companySetting?.email || 'myelectricycleshop@gmail.com'
+    email: companySetting?.email || 'myelectricycleshop@gmail.com',
+    bankName: companySetting?.bankName || invoice.bankName || '',
+    accountNumber: companySetting?.accountNumber || invoice.accountNumber || '',
+    ifscCode: companySetting?.ifscCode || invoice.ifscCode || '',
+    accountHolderName: companySetting?.accountHolderName || invoice.accountHolderName || ''
   };
 
   const companyStateCode = invoice.companyStateCode || getStateCode(company.state, company.gstin);
   const customerStateCode = invoice.customerStateCode || getStateCode(invoice.customerState, invoice.customerGstin);
   const isSame = invoice.isSameState !== undefined ? invoice.isSameState : (invoice.totalIgst === 0 || !invoice.totalIgst);
+  const items = invoice.items || [];
+
+  // Group items by HSN/SAC for the HSN Tax Summary table
+  const hsnGroups = {};
+  items.forEach((it) => {
+    const hsn = it.hsnSac || '—';
+    if (!hsnGroups[hsn]) {
+      hsnGroups[hsn] = {
+        hsnSac: hsn,
+        taxableAmount: 0,
+        cgstRate: it.cgstRate || 0,
+        cgstAmount: 0,
+        sgstRate: it.sgstRate || 0,
+        sgstAmount: 0,
+        igstRate: it.igstRate || 0,
+        igstAmount: 0,
+        totalTax: 0
+      };
+    }
+    hsnGroups[hsn].taxableAmount += Number(it.taxableAmount) || 0;
+    hsnGroups[hsn].cgstAmount += Number(it.cgstAmount) || 0;
+    hsnGroups[hsn].sgstAmount += Number(it.sgstAmount) || 0;
+    hsnGroups[hsn].igstAmount += Number(it.igstAmount) || 0;
+    hsnGroups[hsn].totalTax +=
+      (Number(it.cgstAmount) || 0) + (Number(it.sgstAmount) || 0) + (Number(it.igstAmount) || 0);
+  });
+  const hsnList = Object.values(hsnGroups);
 
   // Generate PDF File from hidden printable element
   const generatePdfFile = async () => {
@@ -240,14 +273,12 @@ export default function WhatsAppShareModal({
       setFeedback(null);
 
       const { pdf, fileName } = await generatePdfFile();
-
-      // Trigger user download of the PDF
       pdf.save(fileName);
 
       setLoadingText('Opening WhatsApp Web...');
       const message = formatWhatsAppInvoiceMessage({ invoice, company });
 
-      // Open WhatsApp Web
+      // Open WhatsApp Web directly with customer number and pre-filled message
       openWhatsAppWeb({ phone: cleanPhone, message });
 
       setFeedback({
@@ -262,7 +293,7 @@ export default function WhatsAppShareModal({
     }
   };
 
-  // 2. Share via WhatsApp App / Native Mobile Sheet
+  // 2. Share via WhatsApp App: Autodirects to customer number with text & PDF (just like WhatsApp Web)
   const handleShareApp = async () => {
     const cleanPhone = cleanPhoneNumber(phoneNumber);
     if (!cleanPhone) {
@@ -276,42 +307,25 @@ export default function WhatsAppShareModal({
       setLoadingText('Preparing Invoice Attachment...');
       setFeedback(null);
 
-      const { pdf, file, fileName } = await generatePdfFile();
+      const { pdf, fileName } = await generatePdfFile();
+      pdf.save(fileName);
+
       const message = formatWhatsAppInvoiceMessage({ invoice, company });
 
-      // Check if browser supports direct file sharing (Web Share API on mobile)
-      const support = checkFileShareSupport(file);
+      // Copy text to clipboard as convenient backup
+      try {
+        await navigator.clipboard.writeText(message);
+      } catch (e) {}
 
-      if (support.supported) {
-        setLoadingText('Opening WhatsApp Share Sheet...');
-        const shareResult = await shareInvoiceFile({
-          file,
-          title: `Invoice ${invoice.invoiceNumber}`,
-          text: message
-        });
+      // Autodirect to client number on WhatsApp App with pre-filled message (no contact selection needed)
+      setTimeout(() => {
+        openWhatsAppDirect({ phone: cleanPhone, message });
+      }, 350);
 
-        if (shareResult.success) {
-          setFeedback({ type: 'success', text: 'Invoice shared successfully via WhatsApp!' });
-        } else if (shareResult.cancelled) {
-          setFeedback({ type: 'info', text: 'Sharing was cancelled' });
-        } else {
-          // Fallback to URL with auto-download
-          pdf.save(fileName);
-          openWhatsAppApp({ phone: cleanPhone, message });
-          setFeedback({
-            type: 'success',
-            text: `Invoice PDF downloaded! WhatsApp opened for +${cleanPhone}. Attach the file into chat.`
-          });
-        }
-      } else {
-        // Desktop / Unsupported browser fallback: Download PDF and open WhatsApp
-        pdf.save(fileName);
-        openWhatsAppApp({ phone: cleanPhone, message });
-        setFeedback({
-          type: 'success',
-          text: `Invoice PDF downloaded! WhatsApp opened for +${cleanPhone}. Please attach the downloaded file.`
-        });
-      }
+      setFeedback({
+        type: 'success',
+        text: `Invoice PDF downloaded! WhatsApp opened directly for +${cleanPhone}. Attach the file into chat.`
+      });
     } catch (err) {
       console.error('WhatsApp App share failed:', err);
       setFeedback({ type: 'error', text: 'Failed to share invoice on WhatsApp' });
@@ -456,7 +470,7 @@ export default function WhatsAppShareModal({
               <span>WhatsApp Web</span>
             </button>
 
-            {/* 2. WhatsApp App / Mobile Sheet */}
+            {/* 2. WhatsApp App */}
             <button
               type="button"
               onClick={handleShareApp}
@@ -683,7 +697,7 @@ export default function WhatsAppShareModal({
                 <th className="py-1 px-2 text-center w-20" style={{ borderRight: '1px solid #000000' }}>HSN/SAC</th>
                 <th className="py-1 px-2 text-center w-16" style={{ borderRight: '1px solid #000000' }}>Quantity</th>
                 <th className="py-1 px-2 text-right w-16" style={{ borderRight: '1px solid #000000' }}>Rate</th>
-                <th className="py-1 px-2 text-center w-12" style={{ borderRight: '1px solid #000000' }}>per</th>
+                {/* <th className="py-1 px-2 text-center w-12" style={{ borderRight: '1px solid #000000' }}>per</th> */}
                 <th className="py-1 px-2 text-right w-20">Amount</th>
               </tr>
 
@@ -695,7 +709,7 @@ export default function WhatsAppShareModal({
                   <td className="py-1 px-2 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>{item.hsnSac || ''}</td>
                   <td className="py-1 px-2 font-mono font-bold text-center" style={{ borderRight: '1px solid #000000' }}>{item.qty} {item.unit}</td>
                   <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>{Number(item.pricePerUnit).toFixed(2)}</td>
-                  <td className="py-1 px-2 text-center uppercase" style={{ borderRight: '1px solid #000000' }}>{item.unit}</td>
+                  {/* <td className="py-1 px-2 text-center uppercase" style={{ borderRight: '1px solid #000000' }}>{item.unit}</td> */}
                   <td className="py-1 px-2 font-mono font-bold text-right">{Number(item.taxableAmount).toFixed(2)}</td>
                 </tr>
               ))}
@@ -709,13 +723,11 @@ export default function WhatsAppShareModal({
                     <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
-                    <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td className="py-0.5 px-2 font-mono font-bold text-right">{Number(invoice.totalCgst || 0).toFixed(2)}</td>
                   </tr>
                   <tr className="text-xs text-black">
                     <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td className="py-0.5 px-2 font-bold text-right uppercase tracking-wider text-black" style={{ borderRight: '1px solid #000000' }}>OUTPUT SGST</td>
-                    <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
@@ -726,7 +738,6 @@ export default function WhatsAppShareModal({
                 <tr className="text-xs text-black">
                   <td style={{ borderRight: '1px solid #000000' }}></td>
                   <td className="py-0.5 px-2 font-bold text-right uppercase tracking-wider text-black" style={{ borderRight: '1px solid #000000' }}>OUTPUT IGST</td>
-                  <td style={{ borderRight: '1px solid #000000' }}></td>
                   <td style={{ borderRight: '1px solid #000000' }}></td>
                   <td style={{ borderRight: '1px solid #000000' }}></td>
                   <td style={{ borderRight: '1px solid #000000' }}></td>
@@ -743,7 +754,6 @@ export default function WhatsAppShareModal({
                   {(invoice.items || []).reduce((sum, item) => sum + (Number(item.qty) || 0), 0)} {(invoice.items?.[0]?.unit || 'SET')}
                 </td>
                 <td style={{ borderRight: '1px solid #000000' }}></td>
-                <td style={{ borderRight: '1px solid #000000' }}></td>
                 <td className="py-1 px-2 font-mono font-black text-right">
                   ₹ {Number(invoice.grandTotal || 0).toFixed(2)}
                 </td>
@@ -751,26 +761,162 @@ export default function WhatsAppShareModal({
 
               {/* Amount Chargeable In Words */}
               <tr style={{ borderBottom: '1px solid #000000' }}>
-                <td colSpan={7} className="p-2 text-xs">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="text-[10px] text-slate-700 block">Amount Chargeable (in words)</span>
-                      <strong className="text-xs uppercase text-black font-bold block">
-                        {numberToWords(invoice.grandTotal)}
-                      </strong>
-                    </div>
-                    <span className="text-[11px] font-bold text-black">E. & O.E</span>
+                <td colSpan={4} className="p-2 text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-700 block">Amount Chargeable (in words)</span>
+                    <strong className="text-xs uppercase text-black font-bold block">
+                      {numberToWords(invoice.grandTotal)}
+                    </strong>
+                  </div>
+                </td>
+                <td colSpan={2} className="p-2 text-right align-top">
+                  <span className="text-[11px] font-bold text-black">E. & O.E</span>
+                </td>
+              </tr>
+
+              {/* HSN/SAC TAX SUMMARY TABLE */}
+              <tr style={{ borderBottom: '1px solid #000000' }}>
+                <td colSpan={6} className="p-2.5">
+                  <table
+                    className="w-full text-xs text-black border-collapse"
+                    style={{ border: '1px solid #000000', borderCollapse: 'collapse' }}
+                  >
+                    <thead>
+                      <tr className="bg-slate-50 font-bold text-center" style={{ borderBottom: '1px solid #000000' }}>
+                        <th rowSpan={2} className="py-1 px-2 text-center" style={{ borderRight: '1px solid #000000' }}>
+                          HSN/SAC
+                        </th>
+                        <th rowSpan={2} className="py-1 px-2 text-right" style={{ borderRight: '1px solid #000000' }}>
+                          Taxable Value
+                        </th>
+                        {isSame ? (
+                          <>
+                            <th colSpan={2} className="py-1 px-2 text-center" style={{ borderRight: '1px solid #000000' }}>
+                              CGST
+                            </th>
+                            <th colSpan={2} className="py-1 px-2 text-center" style={{ borderRight: '1px solid #000000' }}>
+                              SGST/UTGST
+                            </th>
+                          </>
+                        ) : (
+                          <th colSpan={2} className="py-1 px-2 text-center" style={{ borderRight: '1px solid #000000' }}>
+                            IGST
+                          </th>
+                        )}
+                        <th rowSpan={2} className="py-1 px-2 text-right">
+                          Total Tax Amount
+                        </th>
+                      </tr>
+                      <tr className="bg-slate-50 text-[10px]" style={{ borderBottom: '1px solid #000000' }}>
+                        {isSame ? (
+                          <>
+                            <th className="py-0.5 px-1 text-center" style={{ borderRight: '1px solid #000000' }}>Rate</th>
+                            <th className="py-0.5 px-1 text-right" style={{ borderRight: '1px solid #000000' }}>Amount</th>
+                            <th className="py-0.5 px-1 text-center" style={{ borderRight: '1px solid #000000' }}>Rate</th>
+                            <th className="py-0.5 px-1 text-right" style={{ borderRight: '1px solid #000000' }}>Amount</th>
+                          </>
+                        ) : (
+                          <>
+                            <th className="py-0.5 px-1 text-center" style={{ borderRight: '1px solid #000000' }}>Rate</th>
+                            <th className="py-0.5 px-1 text-right" style={{ borderRight: '1px solid #000000' }}>Amount</th>
+                          </>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {hsnList.map((h, i) => (
+                        <tr key={i} className="text-xs" style={{ borderBottom: '1px solid #000000' }}>
+                          <td className="py-1 px-2 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                            {h.hsnSac}
+                          </td>
+                          <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                            {h.taxableAmount.toFixed(2)}
+                          </td>
+                          {isSame ? (
+                            <>
+                              <td className="py-1 px-1 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                                {h.cgstRate}%
+                              </td>
+                              <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                                {h.cgstAmount.toFixed(2)}
+                              </td>
+                              <td className="py-1 px-1 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                                {h.sgstRate}%
+                              </td>
+                              <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                                {h.sgstAmount.toFixed(2)}
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="py-1 px-1 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                                {h.igstRate}%
+                              </td>
+                              <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                                {h.igstAmount.toFixed(2)}
+                              </td>
+                            </>
+                          )}
+                          <td className="py-1 px-2 font-mono text-right font-bold">
+                            {h.totalTax.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                      {/* HSN TOTAL ROW */}
+                      <tr className="font-bold text-xs bg-slate-50">
+                        <td className="py-1 px-2 text-right" style={{ borderRight: '1px solid #000000' }}>
+                          Total
+                        </td>
+                        <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                          {Number(invoice.subtotal).toFixed(2)}
+                        </td>
+                        {isSame ? (
+                          <>
+                            <td style={{ borderRight: '1px solid #000000' }}></td>
+                            <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                              {Number(invoice.totalCgst).toFixed(2)}
+                            </td>
+                            <td style={{ borderRight: '1px solid #000000' }}></td>
+                            <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                              {Number(invoice.totalSgst).toFixed(2)}
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td style={{ borderRight: '1px solid #000000' }}></td>
+                            <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                              {Number(invoice.totalIgst).toFixed(2)}
+                            </td>
+                          </>
+                        )}
+                        <td className="py-1 px-2 font-mono text-right font-bold">
+                          {Number(invoice.totalTax).toFixed(2)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <div className="pt-2 text-xs">
+                    <span className="font-semibold">Tax Amount (in words) : </span>
+                    <span className="font-bold">{numberToWords(invoice.totalTax)}</span>
                   </div>
                 </td>
               </tr>
 
               {/* Declaration & Signature */}
               <tr>
-                <td colSpan={4} className="p-3 text-xs align-top" style={{ borderRight: '1px solid #000000' }}>
+                <td colSpan={3} className="p-3 text-xs align-top" style={{ borderRight: '1px solid #000000' }}>
                   <span className="font-bold block mb-1">Declaration</span>
                   <p className="text-[11px] leading-relaxed text-black">
                     We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.
                   </p>
+                  {company.bankName && (
+                    <div className="mt-3 pt-2 border-t border-slate-200 text-[10px] text-slate-600">
+                      <span className="font-bold text-slate-800 block mb-0.5">Bank Details:</span>
+                      <p>Bank: <strong className="text-slate-800">{company.bankName}</strong> | A/C: <strong className="text-slate-800 font-mono">{company.accountNumber}</strong></p>
+                      <p>IFSC: <strong className="text-slate-800 font-mono">{company.ifscCode}</strong> | A/C Holder: <strong className="text-slate-800">{company.accountHolderName}</strong></p>
+                    </div>
+                  )}
                 </td>
                 <td colSpan={3} className="p-3 text-xs align-top text-right">
                   <span className="font-bold text-xs uppercase block">for {company.name}</span>

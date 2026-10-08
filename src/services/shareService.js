@@ -88,27 +88,121 @@ export function extract10DigitPhone(rawPhone) {
 }
 
 /**
- * Formats a professional Tax Invoice message for WhatsApp.
+ * Formats a comprehensive and professional Tax Invoice message for WhatsApp.
  */
 export function formatWhatsAppInvoiceMessage({ invoice, company }) {
   const companyName = company?.companyName || company?.name || 'MY ELECTRICYCLE SHOP';
   const invNum = invoice?.invoiceNumber || 'INV';
-  const invDate = invoice?.invoiceDate || new Date().toISOString().split('T')[0];
+  
+  // Format date nicely
+  let invDate = invoice?.invoiceDate || '';
+  if (invDate) {
+    try {
+      const d = new Date(invDate);
+      if (!isNaN(d.getTime())) {
+        invDate = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      }
+    } catch (e) {}
+  }
+  if (!invDate) {
+    invDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
   const customerName = invoice?.customerName || 'Valued Customer';
-  const total = Number(invoice?.grandTotal || 0).toLocaleString('en-IN', {
+  const items = invoice?.items || [];
+
+  let itemsSummary = '';
+  if (items.length > 0) {
+    itemsSummary = items.map((it, idx) => {
+      const name = it.name || it.itemName || `Item ${idx + 1}`;
+      const qty = it.quantity || it.qty || 1;
+      const unit = it.unit || 'pcs';
+      const rate = Number(it.price || it.rate || 0).toLocaleString('en-IN');
+      const lineTotal = Number(it.totalAmount || it.amount || (qty * (it.price || 0))).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      return `${idx + 1}. *${name}* (${qty} ${unit} × ₹${rate}) = ₹${lineTotal}`;
+    }).join('\n');
+  }
+
+  const taxable = Number(invoice?.taxableAmount || invoice?.subTotal || 0).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+  const totalCgst = Number(invoice?.totalCgst || 0);
+  const totalSgst = Number(invoice?.totalSgst || 0);
+  const totalIgst = Number(invoice?.totalIgst || 0);
+  const grandTotal = Number(invoice?.grandTotal || 0).toLocaleString('en-IN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
 
-  return `🧾 *TAX INVOICE - ${companyName}*
+  let message = `🧾 *TAX INVOICE - ${companyName}*
 ━━━━━━━━━━━━━━━━━━━━
 *Invoice No:* ${invNum}
 *Date:* ${invDate}
 *Customer:* ${customerName}
-*Grand Total:* ₹${total}
+━━━━━━━━━━━━━━━━━━━━`;
+
+  if (itemsSummary) {
+    message += `\n*ITEMS:*
+${itemsSummary}
+━━━━━━━━━━━━━━━━━━━━`;
+  }
+
+  if (Number(invoice?.taxableAmount || invoice?.subTotal || 0) > 0) {
+    message += `\n*Taxable Amount:* ₹${taxable}`;
+  }
+  if (totalCgst > 0) {
+    message += `\n*CGST:* ₹${totalCgst.toFixed(2)}`;
+  }
+  if (totalSgst > 0) {
+    message += `\n*SGST:* ₹${totalSgst.toFixed(2)}`;
+  }
+  if (totalIgst > 0) {
+    message += `\n*IGST:* ₹${totalIgst.toFixed(2)}`;
+  }
+
+  message += `\n*GRAND TOTAL:* ₹${grandTotal}
 ━━━━━━━━━━━━━━━━━━━━
-📎 *Attached PDF:* ${invNum}.pdf
+📎 *Invoice PDF:* ${invNum}.pdf (Downloaded on device)
 🙏 Thank you for doing business with us!`;
+
+  return message;
+}
+
+/**
+ * Directly opens WhatsApp chat targeting the exact customer phone number with pre-filled message.
+ * Does NOT prompt user to choose a contact or person.
+ */
+export function openWhatsAppDirect({ phone, message }) {
+  const cleanPhone = cleanPhoneNumber(phone);
+  const encodedText = encodeURIComponent(message);
+
+  if (!cleanPhone) {
+    throw new Error('Customer phone number is required for direct WhatsApp navigation');
+  }
+
+  const isMobile = typeof navigator !== 'undefined' &&
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  const deepLink = `whatsapp://send?phone=${cleanPhone}&text=${encodedText}`;
+  const universalUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
+
+  if (isMobile) {
+    // On mobile, trigger custom protocol directly to launch WhatsApp app immediately to that contact
+    window.location.href = deepLink;
+    setTimeout(() => {
+      // Fallback to universal link if protocol wasn't caught
+      if (document.hasFocus && document.hasFocus()) {
+        window.location.href = universalUrl;
+      }
+    }, 1000);
+  } else {
+    // Desktop: opens WhatsApp (prompts Desktop app or Web) in new window
+    window.open(universalUrl, '_blank', 'noopener,noreferrer');
+  }
 }
 
 /**
@@ -127,12 +221,7 @@ export function openWhatsAppWeb({ phone, message }) {
  * Opens WhatsApp App (Mobile direct link / Universal Link) with phone number and pre-filled message.
  */
 export function openWhatsAppApp({ phone, message }) {
-  const cleanPhone = cleanPhoneNumber(phone);
-  const encodedText = encodeURIComponent(message);
-  const url = cleanPhone
-    ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`
-    : `https://api.whatsapp.com/send?text=${encodedText}`;
-  window.open(url, '_blank', 'noopener,noreferrer');
+  return openWhatsAppDirect({ phone, message });
 }
 
 /**

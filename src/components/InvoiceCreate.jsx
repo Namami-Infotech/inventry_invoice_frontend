@@ -325,21 +325,11 @@ function SearchableItemSelect({ row, index, allItems, catalogItems, onSelectItem
                         <span className={`truncate ${alreadySelected ? 'text-slate-500 line-through decoration-slate-300' : ''}`}>
                           {ci.name}
                         </span>
-                        {alreadySelected ? (
+                        {alreadySelected && (
                           <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 flex-shrink-0">
                             Already Added
                           </span>
-                        ) : (
-                          ci.hsnSac && (
-                            <span className="text-[10px] font-mono px-1 py-0.2 bg-slate-100 text-slate-600 rounded flex-shrink-0">
-                              HSN: {ci.hsnSac}
-                            </span>
-                          )
                         )}
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        Rate: <strong className="text-slate-800">₹{ci.pricePerUnit}</strong> / {ci.unit || 'Pcs'} • GST:{' '}
-                        <strong className="text-indigo-600">{ci.gstRate}%</strong>
                       </div>
                     </div>
                     {alreadySelected ? (
@@ -535,7 +525,7 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
       hsnSac: '',
       qty: 1,
       unit: 'Pcs',
-      pricePerUnit: 0,
+      pricePerUnit: '',
       gstRate: 18
     }
   ]);
@@ -698,7 +688,7 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
       itemName: found.name,
       hsnSac: found.hsnSac || '',
       unit: found.unit || 'Pcs',
-      pricePerUnit: found.pricePerUnit,
+      pricePerUnit: found.pricePerUnit ? String(found.pricePerUnit) : '',
       gstRate: found.gstRate
     };
     setItems(newItems);
@@ -720,7 +710,7 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
         hsnSac: '',
         qty: 1,
         unit: 'Pcs',
-        pricePerUnit: 0,
+        pricePerUnit: '',
         gstRate: 18
       }
     ]);
@@ -750,6 +740,11 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
       }
       if (Number(items[i].qty) <= 0) {
         setError(`Quantity must be greater than 0 on line ${i + 1}`);
+        return;
+      }
+      const priceVal = Number(items[i].pricePerUnit);
+      if (items[i].pricePerUnit === '' || items[i].pricePerUnit === null || items[i].pricePerUnit === undefined || isNaN(priceVal) || priceVal <= 0) {
+        setError(`Please enter a valid Price/Unit for "${items[i].itemName || `Line ${i + 1}`}". Price cannot be empty or zero.`);
         return;
       }
     }
@@ -1022,15 +1017,15 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                 <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-0.5">
                   Billing Address
                 </label>
-                <input
-                  type="text"
+                <textarea
+                  rows={2}
                   placeholder="Street, Area, Building..."
                   value={customerAddress}
                   onChange={(e) => {
                     setCustomerAddress(e.target.value);
                     if (sameAsBillTo) setShippingAddress(e.target.value);
                   }}
-                  className="w-full h-8 px-2.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-2xs"
+                  className="w-full py-1.5 px-2.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-2xs resize-none"
                 />
               </div>
             </div>
@@ -1130,12 +1125,12 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                     <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-0.5">
                       Shipping Address
                     </label>
-                    <input
-                      type="text"
-
+                    <textarea
+                      rows={2}
+                      placeholder="Delivery Address, Hub, Shed, Plot..."
                       value={shippingAddress}
                       onChange={(e) => setShippingAddress(e.target.value)}
-                      className="w-full h-8 px-2.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-2xs"
+                      className="w-full py-1.5 px-2.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-2xs resize-none"
                     />
                   </div>
                 </>
@@ -1350,14 +1345,16 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                       />
                     </td>
 
-                    {/* HSN/SAC */}
+                    {/* HSN/SAC (Non-editable) */}
                     <td className="py-2 px-2">
                       <input
                         type="text"
+                        readOnly
                         placeholder="HSN"
-                        value={row.hsnSac}
-                        onChange={(e) => handleRowChange(index, 'hsnSac', e.target.value)}
-                        className="w-full h-9 px-2 text-xs border border-slate-200 rounded-lg font-mono focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                        value={row.hsnSac || ''}
+                        tabIndex={-1}
+                        className="w-full h-9 px-2 text-xs border border-slate-200 rounded-lg font-mono bg-slate-50 text-slate-700 cursor-not-allowed select-none focus:outline-none"
+                        title="HSN is auto-filled from selected item"
                       />
                     </td>
 
@@ -1381,15 +1378,19 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                       </span>
                     </td>
 
-                    {/* Price/Unit */}
+                    {/* Price/Unit (Text field accepting only numbers/decimals) */}
                     <td className="py-2 px-2 text-right">
                       <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        required
-                        value={row.pricePerUnit}
-                        onChange={(e) => handleRowChange(index, 'pricePerUnit', e.target.value)}
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        value={row.pricePerUnit ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                            handleRowChange(index, 'pricePerUnit', val);
+                          }
+                        }}
                         className="w-full h-9 px-2.5 text-xs border border-slate-200 rounded-lg text-right font-semibold focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                       />
                     </td>
