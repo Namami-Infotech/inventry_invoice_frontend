@@ -12,9 +12,10 @@ import {
   IndianRupee,
   Filter,
   Printer,
-  Share2
+  Share2,
+  Phone
 } from 'lucide-react';
-import { invoiceService } from '../services/api';
+import { invoiceService, userService } from '../services/api';
 import Pagination from './Pagination';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import WhatsAppShareModal from './WhatsAppShareModal';
@@ -28,6 +29,40 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
   const [shareTarget, setShareTarget] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [usersMap, setUsersMap] = useState({});
+
+  useEffect(() => {
+    userService.getAll()
+      .then((res) => {
+        if (res.data?.success && Array.isArray(res.data.data)) {
+          const map = {};
+          res.data.data.forEach((u) => {
+            if (u.contactNumber) {
+              if (u.id) map[`id_${u.id}`] = u.contactNumber;
+              if (u.name) map[`name_${u.name.trim().toLowerCase()}`] = u.contactNumber;
+            }
+          });
+          setUsersMap(map);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const getCustomerPhone = (inv) => {
+    if (!inv) return '';
+    if (inv.customerPhone) return inv.customerPhone;
+    if (inv.shippingPhone) return inv.shippingPhone;
+    if (inv.userId && usersMap[`id_${inv.userId}`]) return usersMap[`id_${inv.userId}`];
+    const nameKey = (inv.customerName || '').trim().toLowerCase();
+    if (nameKey && usersMap[`name_${nameKey}`]) return usersMap[`name_${nameKey}`];
+    try {
+      const cached = localStorage.getItem(`cust_phone_${nameKey}`);
+      if (cached) return cached;
+      const dir = JSON.parse(localStorage.getItem('customer_phones_directory') || '{}');
+      if (dir[nameKey]) return dir[nameKey];
+    } catch (e) {}
+    return '';
+  };
   const [summaryStats, setSummaryStats] = useState({
     totalCount: 0,
     totalAmount: 0,
@@ -325,7 +360,22 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
 
                     <td className="py-3.5 px-4">
                       <div className="font-semibold text-slate-900">{inv.customerName}</div>
-                      <div className="text-xs text-slate-400">{inv.customerCity || ''}</div>
+                      <div className="text-xs text-slate-500 flex items-center space-x-1.5 mt-0.5">
+                        {getCustomerPhone(inv) ? (
+                          <span className="font-mono text-emerald-700 font-semibold flex items-center">
+                            <Phone className="w-3 h-3 inline mr-1 text-emerald-600 flex-shrink-0" />
+                            {getCustomerPhone(inv)}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-[11px] italic">No phone</span>
+                        )}
+                        {inv.customerCity && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span>{inv.customerCity}</span>
+                          </>
+                        )}
+                      </div>
                     </td>
 
                     <td className="py-3.5 px-4 text-right font-mono text-xs text-slate-700">
@@ -362,7 +412,17 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
                     <td className="py-3.5 px-4 text-center">
                       <div className="flex items-center justify-center space-x-1.5 sm:space-x-2">
                         <button
-                          onClick={() => setShareTarget(inv)}
+                          onClick={() => {
+                            const phone = getCustomerPhone(inv);
+                            const enriched = phone
+                              ? {
+                                  ...inv,
+                                  customerPhone: inv.customerPhone || phone,
+                                  shippingPhone: inv.shippingPhone || phone
+                                }
+                              : inv;
+                            setShareTarget(enriched);
+                          }}
                           className="flex items-center space-x-1.5 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer border border-emerald-200"
                           title="Share Invoice on WhatsApp"
                         >
@@ -371,7 +431,17 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
                         </button>
 
                         <button
-                          onClick={() => onSelectInvoice(inv)}
+                          onClick={() => {
+                            const phone = getCustomerPhone(inv);
+                            const enriched = phone
+                              ? {
+                                  ...inv,
+                                  customerPhone: inv.customerPhone || phone,
+                                  shippingPhone: inv.shippingPhone || phone
+                                }
+                              : inv;
+                            onSelectInvoice(enriched);
+                          }}
                           className="flex items-center space-x-1.5 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                           title="View / Print / Download A4 PDF"
                         >

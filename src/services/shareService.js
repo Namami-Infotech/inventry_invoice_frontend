@@ -114,11 +114,13 @@ export function formatWhatsAppInvoiceMessage({ invoice, company }) {
   let itemsSummary = '';
   if (items.length > 0) {
     itemsSummary = items.map((it, idx) => {
-      const name = it.name || it.itemName || `Item ${idx + 1}`;
-      const qty = it.quantity || it.qty || 1;
-      const unit = it.unit || 'pcs';
-      const rate = Number(it.price || it.rate || 0).toLocaleString('en-IN');
-      const lineTotal = Number(it.totalAmount || it.amount || (qty * (it.price || 0))).toLocaleString('en-IN', {
+      const name = it.itemName || it.name || `Item ${idx + 1}`;
+      const qty = Number(it.qty || it.quantity || 1);
+      const unit = it.unit || 'Pcs';
+      const rateNum = Number(it.pricePerUnit !== undefined && it.pricePerUnit !== null ? it.pricePerUnit : (it.rate || it.price || 0));
+      const rate = rateNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const lineTotalNum = Number(it.taxableAmount !== undefined && it.taxableAmount !== null ? it.taxableAmount : (it.totalAmount || it.amount || (qty * rateNum)));
+      const lineTotal = lineTotalNum.toLocaleString('en-IN', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
@@ -126,7 +128,8 @@ export function formatWhatsAppInvoiceMessage({ invoice, company }) {
     }).join('\n');
   }
 
-  const taxable = Number(invoice?.taxableAmount || invoice?.subTotal || 0).toLocaleString('en-IN', {
+  const subtotalVal = Number(invoice?.subtotal !== undefined && invoice?.subtotal !== null ? invoice.subtotal : (invoice?.taxableAmount || invoice?.subTotal || 0));
+  const taxable = subtotalVal.toLocaleString('en-IN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
@@ -166,7 +169,7 @@ ${itemsSummary}
 
   message += `\n*GRAND TOTAL:* ₹${grandTotal}
 ━━━━━━━━━━━━━━━━━━━━
-📎 *Invoice PDF:* ${invNum}.pdf (Downloaded on device)
+📎 *Invoice File:* ${invNum}.pdf
 🙏 Thank you for doing business with us!`;
 
   return message;
@@ -191,30 +194,51 @@ export function openWhatsAppDirect({ phone, message }) {
   const universalUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
 
   if (isMobile) {
-    // On mobile, trigger custom protocol directly to launch WhatsApp app immediately to that contact
+    // Mobile: open WhatsApp app directly to customer chat
     window.location.href = deepLink;
     setTimeout(() => {
-      // Fallback to universal link if protocol wasn't caught
       if (document.hasFocus && document.hasFocus()) {
         window.location.href = universalUrl;
       }
     }, 1000);
   } else {
-    // Desktop: opens WhatsApp (prompts Desktop app or Web) in new window
-    window.open(universalUrl, '_blank', 'noopener,noreferrer');
+    // Desktop: directly launch WhatsApp desktop app or open customer chat URL
+    // Trigger deep link for WhatsApp Desktop app
+    window.location.href = deepLink;
+    setTimeout(() => {
+      if (document.hasFocus && document.hasFocus()) {
+        window.open(universalUrl, '_blank', 'noopener,noreferrer');
+      }
+    }, 1200);
   }
 }
 
 /**
  * Opens WhatsApp Web in a new tab with phone number and pre-filled message.
+ * On mobile devices (where web.whatsapp.com is blocked by WhatsApp), automatically
+ * routes to WhatsApp mobile intent so it opens smoothly on phone.
  */
 export function openWhatsAppWeb({ phone, message }) {
   const cleanPhone = cleanPhoneNumber(phone);
   const encodedText = encodeURIComponent(message);
-  const url = cleanPhone
-    ? `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`
-    : `https://web.whatsapp.com/send?text=${encodedText}`;
-  window.open(url, '_blank', 'noopener,noreferrer');
+
+  const isMobile = typeof navigator !== 'undefined' &&
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    // Phone browsers cannot load web.whatsapp.com (WhatsApp blocks mobile browsers).
+    // On mobile phone, open WhatsApp directly with customer phone & pre-filled message!
+    const mobileUrl = cleanPhone
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`
+      : `https://api.whatsapp.com/send?text=${encodedText}`;
+    window.location.href = mobileUrl;
+  } else {
+    // Desktop: opens web.whatsapp.com
+    const desktopUrl = cleanPhone
+      ? `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`
+      : `https://web.whatsapp.com/send?text=${encodedText}`;
+    window.open(desktopUrl, '_blank', 'noopener,noreferrer');
+  }
 }
 
 /**

@@ -99,6 +99,22 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
 
   const companyStateCode = invoice.companyStateCode || getStateCode(company.state, company.gstin);
 
+  const resolveBuyerPhone = () => {
+    if (invoice.customerPhone) return invoice.customerPhone;
+    if (invoice.shippingPhone) return invoice.shippingPhone;
+    const nameKey = (invoice.customerName || '').trim().toLowerCase();
+    if (nameKey) {
+      try {
+        const cached = localStorage.getItem(`cust_phone_${nameKey}`);
+        if (cached) return cached;
+        const dir = JSON.parse(localStorage.getItem('customer_phones_directory') || '{}');
+        if (dir[nameKey]) return dir[nameKey];
+      } catch (e) {}
+    }
+    return '';
+  };
+  const resolvedCustomerPhone = resolveBuyerPhone();
+
   // Buyer (Bill to)
   const buyer = {
     name: invoice.customerName || 'Customer',
@@ -107,7 +123,7 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
     state: invoice.customerState || '',
     stateCode: invoice.customerStateCode || getStateCode(invoice.customerState, invoice.customerGstin),
     gstin: invoice.customerGstin || '',
-    phone: invoice.customerPhone || '',
+    phone: resolvedCustomerPhone,
     email: invoice.customerEmail || ''
   };
 
@@ -119,7 +135,7 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
     state: invoice.shippingState || invoice.customerState || '',
     stateCode: invoice.shippingStateCode || getStateCode(invoice.shippingState || invoice.customerState, invoice.shippingGstin || invoice.customerGstin),
     gstin: invoice.shippingGstin || invoice.customerGstin || '',
-    phone: invoice.shippingPhone || invoice.customerPhone || ''
+    phone: invoice.shippingPhone || resolvedCustomerPhone
   };
 
   const isSame = invoice.isSameState;
@@ -420,6 +436,11 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                             <span className="font-semibold">State Name :</span> {consignee.state || company.state}
                             {consignee.stateCode ? `, Code : ${consignee.stateCode}` : ''}
                           </p>
+                          {(consignee.phone || buyer.phone) && (
+                            <p className="text-[11px]">
+                              <span className="font-semibold">Contact / Phone :</span> {consignee.phone || buyer.phone}
+                            </p>
+                          )}
                         </div>
 
                         {/* BUYER (BILL TO) */}
@@ -437,6 +458,11 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                             <span className="font-semibold">State Name :</span> {buyer.state || company.state}
                             {buyer.stateCode ? `, Code : ${buyer.stateCode}` : ''}
                           </p>
+                          {buyer.phone && (
+                            <p className="text-[11px]">
+                              <span className="font-semibold">Contact / Phone :</span> {buyer.phone}
+                            </p>
+                          )}
                         </div>
                       </div>
 

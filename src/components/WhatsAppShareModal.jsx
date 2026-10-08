@@ -254,8 +254,24 @@ export default function WhatsAppShareModal({
     const fileName = `${invoice.invoiceNumber || 'Tax-Invoice'}.pdf`;
     const blob = pdf.output('blob');
     const file = new File([blob], fileName, { type: 'application/pdf' });
+    const imageBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
 
-    return { pdf, blob, file, fileName };
+    return { pdf, blob, file, fileName, imageBlob };
+  };
+
+  // Helper to copy invoice image to clipboard for instant Ctrl+V into WhatsApp
+  const copyInvoiceImageToClipboard = async (imageBlob) => {
+    if (imageBlob && typeof navigator !== 'undefined' && navigator.clipboard && window.ClipboardItem) {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': imageBlob })
+        ]);
+        return true;
+      } catch (err) {
+        console.warn('Clipboard image write not permitted:', err);
+      }
+    }
+    return false;
   };
 
   // 1. Share via WhatsApp Web (Desktop)
@@ -269,11 +285,14 @@ export default function WhatsAppShareModal({
 
     try {
       setLoading(true);
-      setLoadingText('Generating Tax Invoice PDF...');
+      setLoadingText('Generating Tax Invoice...');
       setFeedback(null);
 
-      const { pdf, fileName } = await generatePdfFile();
+      const { pdf, fileName, imageBlob } = await generatePdfFile();
       pdf.save(fileName);
+
+      // Copy image to clipboard so user can simply press Ctrl+V in WhatsApp Web
+      const copiedImage = await copyInvoiceImageToClipboard(imageBlob);
 
       setLoadingText('Opening WhatsApp Web...');
       const message = formatWhatsAppInvoiceMessage({ invoice, company });
@@ -283,17 +302,19 @@ export default function WhatsAppShareModal({
 
       setFeedback({
         type: 'success',
-        text: `PDF downloaded! WhatsApp Web opened with +${cleanPhone}. Attach the downloaded ${fileName} in the chat.`
+        text: copiedImage
+          ? `Invoice copied to clipboard! WhatsApp Web open hone par chat me Ctrl+V (Paste) dabayein, ya downloaded PDF (${fileName}) ko attach karein.`
+          : `PDF downloaded! WhatsApp Web me downloaded ${fileName} attach karein.`
       });
     } catch (err) {
       console.error('WhatsApp Web share failed:', err);
-      setFeedback({ type: 'error', text: 'Failed to generate PDF for WhatsApp Web' });
+      setFeedback({ type: 'error', text: 'Failed to generate invoice for WhatsApp Web' });
     } finally {
       setLoading(false);
     }
   };
 
-  // 2. Share via WhatsApp App: Autodirects to customer number with text & PDF (just like WhatsApp Web)
+  // 2. Share via WhatsApp App: Directly opens customer's WhatsApp chat with pre-filled invoice details
   const handleShareApp = async () => {
     const cleanPhone = cleanPhoneNumber(phoneNumber);
     if (!cleanPhone) {
@@ -304,31 +325,30 @@ export default function WhatsAppShareModal({
 
     try {
       setLoading(true);
-      setLoadingText('Preparing Invoice Attachment...');
+      setLoadingText('Opening WhatsApp with Customer Number...');
       setFeedback(null);
 
-      const { pdf, fileName } = await generatePdfFile();
-      pdf.save(fileName);
-
+      const { pdf, fileName, imageBlob } = await generatePdfFile();
       const message = formatWhatsAppInvoiceMessage({ invoice, company });
 
-      // Copy text to clipboard as convenient backup
-      try {
-        await navigator.clipboard.writeText(message);
-      } catch (e) {}
+      // 1. Copy high-res invoice image to clipboard for instant Ctrl+V paste in WhatsApp
+      const copiedImage = await copyInvoiceImageToClipboard(imageBlob);
 
-      // Autodirect to client number on WhatsApp App with pre-filled message (no contact selection needed)
-      setTimeout(() => {
-        openWhatsAppDirect({ phone: cleanPhone, message });
-      }, 350);
+      // 2. Auto-save PDF on device
+      pdf.save(fileName);
+
+      // 3. Directly launch WhatsApp targeting this exact customer's phone number
+      openWhatsAppApp({ phone: cleanPhone, message });
 
       setFeedback({
         type: 'success',
-        text: `Invoice PDF downloaded! WhatsApp opened directly for +${cleanPhone}. Attach the file into chat.`
+        text: copiedImage
+          ? `WhatsApp opened for +${cleanPhone}! Invoice copied to clipboard — press Ctrl+V (Paste) in chat, or drag downloaded ${fileName}.`
+          : `WhatsApp opened for +${cleanPhone}! PDF (${fileName}) saved to your device.`
       });
     } catch (err) {
       console.error('WhatsApp App share failed:', err);
-      setFeedback({ type: 'error', text: 'Failed to share invoice on WhatsApp' });
+      setFeedback({ type: 'error', text: 'Failed to open WhatsApp for this customer' });
     } finally {
       setLoading(false);
     }
@@ -593,6 +613,11 @@ export default function WhatsAppShareModal({
                           <span className="font-semibold">State Name :</span> {invoice.shippingState || invoice.customerState || company.state}
                           {invoice.shippingStateCode ? `, Code : ${invoice.shippingStateCode}` : ''}
                         </p>
+                        {(invoice.shippingPhone || invoice.customerPhone || phoneNumber) && (
+                          <p className="text-[11px]">
+                            <span className="font-semibold">Contact / Phone :</span> {invoice.shippingPhone || invoice.customerPhone || phoneNumber}
+                          </p>
+                        )}
                       </div>
 
                       {/* Buyer */}
@@ -610,6 +635,11 @@ export default function WhatsAppShareModal({
                           <span className="font-semibold">State Name :</span> {invoice.customerState || company.state}
                           {customerStateCode ? `, Code : ${customerStateCode}` : ''}
                         </p>
+                        {(invoice.customerPhone || phoneNumber) && (
+                          <p className="text-[11px]">
+                            <span className="font-semibold">Contact / Phone :</span> {invoice.customerPhone || phoneNumber}
+                          </p>
+                        )}
                       </div>
                     </div>
 
