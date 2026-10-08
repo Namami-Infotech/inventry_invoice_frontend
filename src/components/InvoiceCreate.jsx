@@ -107,9 +107,8 @@ function SearchableCustomerSelect({
             tabIndex={-1}
           >
             <ChevronDown
-              className={`w-4 h-4 transition-transform duration-200 ${
-                isOpen ? 'rotate-180 text-indigo-600' : ''
-              }`}
+              className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-600' : ''
+                }`}
             />
           </button>
         </div>
@@ -141,11 +140,10 @@ function SearchableCustomerSelect({
                       onSelectUser(u);
                       setIsOpen(false);
                     }}
-                    className={`p-2.5 transition-colors flex items-center justify-between cursor-pointer ${
-                      isSelected
-                        ? 'bg-indigo-50/90 font-semibold'
-                        : 'hover:bg-slate-50'
-                    }`}
+                    className={`p-2.5 transition-colors flex items-center justify-between cursor-pointer ${isSelected
+                      ? 'bg-indigo-50/90 font-semibold'
+                      : 'hover:bg-slate-50'
+                      }`}
                   >
                     <div className="min-w-0 pr-2">
                       <div className="text-slate-900 font-semibold truncate flex items-center space-x-2">
@@ -263,9 +261,8 @@ function SearchableItemSelect({ row, index, allItems, catalogItems, onSelectItem
           tabIndex={-1}
         >
           <ChevronDown
-            className={`w-3.5 h-3.5 transition-transform duration-200 ${
-              isOpen ? 'rotate-180 text-indigo-600' : ''
-            }`}
+            className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-600' : ''
+              }`}
           />
         </button>
       </div>
@@ -315,13 +312,12 @@ function SearchableItemSelect({ row, index, allItems, catalogItems, onSelectItem
                       setIsOpen(false);
                       setSearchTerm('');
                     }}
-                    className={`p-2.5 transition-colors flex items-center justify-between ${
-                      alreadySelected
-                        ? 'opacity-40 bg-slate-100/70 cursor-not-allowed select-none'
-                        : isSelected
+                    className={`p-2.5 transition-colors flex items-center justify-between ${alreadySelected
+                      ? 'opacity-40 bg-slate-100/70 cursor-not-allowed select-none'
+                      : isSelected
                         ? 'bg-indigo-50/70 font-semibold cursor-pointer'
                         : 'hover:bg-indigo-50/70 cursor-pointer'
-                    }`}
+                      }`}
                     title={alreadySelected ? `"${ci.name}" is already added in another row` : ''}
                   >
                     <div className="min-w-0 pr-2">
@@ -838,7 +834,7 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
               const dir = JSON.parse(localStorage.getItem('customer_phones_directory') || '{}');
               dir[cleanKey] = cleanDigits;
               localStorage.setItem('customer_phones_directory', JSON.stringify(dir));
-            } catch (e) {}
+            } catch (e) { }
           }
         }
         if (onInvoiceCreated) {
@@ -855,37 +851,38 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
   return (
     <div className="flex flex-col min-h-[calc(100vh-140px)] space-y-3">
       {/* Sleek Compact Header */}
-      <div className="bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center space-x-2.5 min-w-0">
+      <div className="bg-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between gap-2 flex-shrink-0">
+        <div className="flex items-center space-x-2 min-w-0 flex-1">
           <button
             type="button"
             onClick={onCancel}
-            className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-lg shadow-xs transition-all cursor-pointer"
+            className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-lg shadow-xs transition-all cursor-pointer shrink-0"
             title="Back to invoices"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back</span>
           </button>
 
-          <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0 border border-indigo-100/70">
+          <div className="hidden sm:flex w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 items-center justify-center shrink-0 border border-indigo-100/70">
             <FileText className="w-3.5 h-3.5" />
           </div>
-          <div className="min-w-0 flex items-center space-x-2">
-            <h1 className="text-sm font-bold text-slate-900 tracking-tight whitespace-nowrap">Tax Invoice</h1>
-            <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[9px] font-bold uppercase tracking-wider border border-indigo-100">
+
+          <div className="min-w-0 flex items-center space-x-2 truncate">
+            <h1 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight truncate">Tax Invoice</h1>
+            <span className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[9px] font-bold uppercase tracking-wider border border-indigo-100 shrink-0">
               Dual-GST
             </span>
-            <span className="text-slate-300 hidden sm:inline">•</span>
-            <span className="text-[11px] text-slate-500 font-medium truncate hidden sm:inline">
+            <span className="text-slate-300 hidden md:inline">•</span>
+            <span className="text-[11px] text-slate-500 font-medium truncate hidden md:inline">
               {companySetting?.companyName || 'Company'}
               {companySetting?.gstin ? ` (GSTIN: ${companySetting.gstin})` : ''}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 flex-shrink-0">
-          <div className="flex items-center space-x-1.5 font-mono text-xs bg-slate-50 px-2.5 py-1 rounded-lg text-slate-700 border border-slate-200">
-            <span className="text-slate-400 font-sans text-[10px] uppercase font-semibold">Inv No:</span>
+        <div className="flex items-center shrink-0">
+          <div className="flex items-center space-x-1 font-mono text-[11px] sm:text-xs bg-slate-50 px-2 sm:px-2.5 py-1 rounded-lg text-slate-700 border border-slate-200">
+            <span className="text-slate-400 font-sans text-[9px] sm:text-[10px] uppercase font-semibold">Inv No:</span>
             <span className="font-bold text-indigo-600">{nextInvoiceNumber || 'Auto'}</span>
           </div>
         </div>
@@ -928,11 +925,10 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
             <button
               type="button"
               onClick={() => setShowDispatchFields(!showDispatchFields)}
-              className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                showDispatchFields || deliveryNote || buyersOrderNo || dispatchDocNo || dispatchedThrough
-                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-              }`}
+              className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${showDispatchFields || deliveryNote || buyersOrderNo || dispatchDocNo || dispatchedThrough
+                ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                }`}
             >
               <Truck className="w-3.5 h-3.5" />
               <span>Dispatch & Order Details</span>
@@ -960,7 +956,6 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                 </label>
                 <input
                   type="text"
-                  placeholder="Enter customer / business name"
                   value={customerName}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -979,7 +974,7 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                             setCustomerPhone(dir[cleanKey]);
                             if (sameAsBillTo) setShippingPhone(dir[cleanKey]);
                           }
-                        } catch (err) {}
+                        } catch (err) { }
                       }
                     }
                   }}
@@ -993,7 +988,6 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                 </label>
                 <input
                   type="tel"
-                  placeholder="e.g. 9876543210 (For WhatsApp PDF Share)"
                   value={customerPhone}
                   onChange={(e) => {
                     const phone = e.target.value;
@@ -1096,7 +1090,7 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Sundry Debtors URP / Warehouse / Branch"
+
                       value={shippingName}
                       onChange={(e) => setShippingName(e.target.value)}
                       className="w-full h-8 px-2.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-2xs"
@@ -1109,7 +1103,7 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                     </label>
                     <input
                       type="tel"
-                      placeholder="e.g. 9876543210 (For Delivery/WhatsApp)"
+
                       value={shippingPhone}
                       onChange={(e) => setShippingPhone(e.target.value)}
                       className="w-full h-8 px-2.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-2xs"
@@ -1138,7 +1132,7 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                     </label>
                     <input
                       type="text"
-                      placeholder="Delivery Address, Hub, Shed, Plot..."
+
                       value={shippingAddress}
                       onChange={(e) => setShippingAddress(e.target.value)}
                       className="w-full h-8 px-2.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-2xs"

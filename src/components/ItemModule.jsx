@@ -142,17 +142,17 @@ export default function ItemModule() {
             className="w-full h-10 pl-10 pr-4 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-2xs transition-all"
           />
         </div>
-          <div className="flex items-center space-x-3">
-          
+        <div className="flex items-center space-x-3">
+
           <button
             onClick={openAddModal}
             className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-sm transition-all"
           >
             <Plus className="w-4 h-4" />
-            <span>Add New Item</span>
+            <span>Add Item</span>
           </button>
         </div>
-        
+
       </div>
 
       {/* Items Table */}

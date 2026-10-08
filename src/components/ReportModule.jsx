@@ -495,8 +495,8 @@ export default function ReportModule({ companySetting }) {
             type="button"
             onClick={() => setActiveReportTab('sales')}
             className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeReportTab === 'sales'
-                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
           >
             <Receipt className="w-4 h-4" />
@@ -511,8 +511,8 @@ export default function ReportModule({ companySetting }) {
             type="button"
             onClick={() => setActiveReportTab('hsn')}
             className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeReportTab === 'hsn'
-                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
           >
             <Package className="w-4 h-4" />
@@ -527,8 +527,8 @@ export default function ReportModule({ companySetting }) {
             type="button"
             onClick={() => setActiveReportTab('liability')}
             className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeReportTab === 'liability'
-                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
           >
             <TrendingUp className="w-4 h-4" />
@@ -713,7 +713,7 @@ export default function ReportModule({ companySetting }) {
             <div className="px-4 py-3 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                  GST Sales Register (Outward Invoices)
+                  GST Sales Register
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   Chronological record of invoices with state-wise GST breakup
@@ -728,24 +728,24 @@ export default function ReportModule({ companySetting }) {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-100/70 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
-                    <th className="py-2.5 px-3">Sl</th>
-                    <th className="py-2.5 px-3">Invoice No.</th>
-                    <th className="py-2.5 px-3">Date</th>
-                    <th className="py-2.5 px-3">Customer / Buyer</th>
-                    <th className="py-2.5 px-3">GSTIN / UIN</th>
-                    <th className="py-2.5 px-3">POS State</th>
-                    <th className="py-2.5 px-3 text-right">Taxable (₹)</th>
-                    <th className="py-2.5 px-3 text-right">CGST (₹)</th>
-                    <th className="py-2.5 px-3 text-right">SGST (₹)</th>
-                    <th className="py-2.5 px-3 text-right">IGST (₹)</th>
-                    <th className="py-2.5 px-3 text-right">Total Tax (₹)</th>
-                    <th className="py-2.5 px-3 text-right">Invoice Total (₹)</th>
+                    <th className="py-2.5 px-3 w-10 text-center">Sl</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Invoice No.</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Date</th>
+                    <th className="py-2.5 px-3 min-w-[160px]">Customer / Buyer</th>
+                    {/* <th className="py-2.5 px-3">GSTIN / UIN</th> */}
+                    <th className="py-2.5 px-3 whitespace-nowrap">POS State</th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap">Taxable (₹)</th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap">CGST (₹)</th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap">SGST (₹)</th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap">IGST (₹)</th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap">Total Tax (₹)</th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap">Invoice Total (₹)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-800">
                   {filteredInvoices.length === 0 ? (
                     <tr>
-                      <td colSpan={12} className="py-8 text-center text-slate-400 text-xs">
+                      <td colSpan={11} className="py-8 text-center text-slate-400 text-xs">
                         No sales invoices found for the selected period
                       </td>
                     </tr>
@@ -754,13 +754,13 @@ export default function ReportModule({ companySetting }) {
                       const isInter = Number(inv.totalIgst) > 0;
                       return (
                         <tr key={inv.id || idx} className="hover:bg-slate-50/70 transition-colors">
-                          <td className="py-2 px-3 text-slate-400 font-mono text-[11px]">{idx + 1}</td>
-                          <td className="py-2 px-3 font-mono font-bold text-indigo-600">{inv.invoiceNumber}</td>
-                          <td className="py-2 px-3 text-slate-600 whitespace-nowrap">{formatDateDDMonYYYY(inv.invoiceDate)}</td>
-                          <td className="py-2 px-3 font-medium text-slate-900 max-w-[180px] truncate" title={inv.customerName}>
+                          <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px] text-center">{idx + 1}</td>
+                          <td className="py-2.5 px-3 font-mono font-bold text-indigo-600 whitespace-nowrap">{inv.invoiceNumber}</td>
+                          <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">{formatDateDDMonYYYY(inv.invoiceDate)}</td>
+                          <td className="py-2.5 px-3 font-medium text-slate-900" title={inv.customerName}>
                             {inv.customerName}
                           </td>
-                          <td className="py-2 px-3">
+                          {/* <td className="py-2 px-3">
                             {inv.customerGstin ? (
                               <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 {inv.customerGstin}
@@ -768,19 +768,19 @@ export default function ReportModule({ companySetting }) {
                             ) : (
                               <span className="text-[10px] text-slate-400 italic">URP</span>
                             )}
-                          </td>
-                          <td className="py-2 px-3 whitespace-nowrap">
+                          </td> */}
+                          <td className="py-2.5 px-3 whitespace-nowrap">
                             <span className="text-slate-700">{inv.customerState}</span>
                             {inv.customerStateCode && (
                               <span className="text-[10px] text-slate-400 ml-1 font-mono">({inv.customerStateCode})</span>
                             )}
                           </td>
-                          <td className="py-2 px-3 text-right font-mono">{formatDec(inv.subtotal)}</td>
-                          <td className="py-2 px-3 text-right font-mono text-slate-600">{formatDec(inv.totalCgst)}</td>
-                          <td className="py-2 px-3 text-right font-mono text-slate-600">{formatDec(inv.totalSgst)}</td>
-                          <td className="py-2 px-3 text-right font-mono text-purple-700 font-semibold">{formatDec(inv.totalIgst)}</td>
-                          <td className="py-2 px-3 text-right font-mono font-semibold text-slate-900">{formatDec(inv.totalTax)}</td>
-                          <td className="py-2 px-3 text-right font-mono font-black text-slate-900 bg-slate-50/40">
+                          <td className="py-2.5 px-3 text-right font-mono whitespace-nowrap">{formatDec(inv.subtotal)}</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-slate-600 whitespace-nowrap">{formatDec(inv.totalCgst)}</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-slate-600 whitespace-nowrap">{formatDec(inv.totalSgst)}</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-purple-700 font-semibold whitespace-nowrap">{formatDec(inv.totalIgst)}</td>
+                          <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-900 whitespace-nowrap">{formatDec(inv.totalTax)}</td>
+                          <td className="py-2.5 px-3 text-right font-mono font-black text-slate-900 bg-slate-50/40 whitespace-nowrap">
                             {formatDec(inv.grandTotal)}
                           </td>
                         </tr>
@@ -792,15 +792,15 @@ export default function ReportModule({ companySetting }) {
                 {filteredInvoices.length > 0 && (
                   <tfoot>
                     <tr className="bg-slate-100 font-bold border-t-2 border-slate-300 text-slate-900">
-                      <td colSpan={6} className="py-2.5 px-3 text-right uppercase text-[11px] tracking-wider">
+                      <td colSpan={5} className="py-2.5 px-3 text-right uppercase text-[11px] tracking-wider whitespace-nowrap">
                         Total ({filteredInvoices.length} Invoices)
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-indigo-700">{formatDec(salesSummary.taxable)}</td>
-                      <td className="py-2.5 px-3 text-right font-mono">{formatDec(salesSummary.cgst)}</td>
-                      <td className="py-2.5 px-3 text-right font-mono">{formatDec(salesSummary.sgst)}</td>
-                      <td className="py-2.5 px-3 text-right font-mono text-purple-700">{formatDec(salesSummary.igst)}</td>
-                      <td className="py-2.5 px-3 text-right font-mono text-slate-900">{formatDec(salesSummary.totalTax)}</td>
-                      <td className="py-2.5 px-3 text-right font-mono font-black text-emerald-800 bg-emerald-50/50">
+                      <td className="py-2.5 px-3 text-right font-mono text-indigo-700 whitespace-nowrap">{formatDec(salesSummary.taxable)}</td>
+                      <td className="py-2.5 px-3 text-right font-mono whitespace-nowrap">{formatDec(salesSummary.cgst)}</td>
+                      <td className="py-2.5 px-3 text-right font-mono whitespace-nowrap">{formatDec(salesSummary.sgst)}</td>
+                      <td className="py-2.5 px-3 text-right font-mono text-purple-700 whitespace-nowrap">{formatDec(salesSummary.igst)}</td>
+                      <td className="py-2.5 px-3 text-right font-mono text-slate-900 whitespace-nowrap">{formatDec(salesSummary.totalTax)}</td>
+                      <td className="py-2.5 px-3 text-right font-mono font-black text-emerald-800 bg-emerald-50/50 whitespace-nowrap">
                         {formatINR(salesSummary.grandTotal)}
                       </td>
                     </tr>

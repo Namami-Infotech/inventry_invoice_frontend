@@ -144,34 +144,32 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
   };
 
   return (
-    <div className="space-y-6">
-    
+    <div className="space-y-3.5 sm:space-y-6">
 
-      {/* Top Stat Summary Cards: Total, Paid, Pending, Cancelled (Compact Height) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Top Stat Summary Cards: 2 on top & 2 below on mobile, 4 in a row on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         {/* Total Invoices */}
         <div
           onClick={() => setStatusFilter('')}
-          className={`bg-white px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${
-            statusFilter === ''
-              ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/20'
-              : 'border-slate-200 hover:border-indigo-200'
-          }`}
+          className={`bg-white p-2.5 sm:px-3.5 sm:py-2.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${statusFilter === ''
+            ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/20'
+            : 'border-slate-200 hover:border-indigo-200'
+            }`}
           title="Filter: All Invoices"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 truncate">
               Total Invoices
             </span>
-            <span className="p-1 rounded-md bg-indigo-50 text-indigo-600">
+            <span className="p-1 rounded-md bg-indigo-50 text-indigo-600 shrink-0 ml-1">
               <Receipt className="w-3.5 h-3.5" />
             </span>
           </div>
-          <div className="flex items-baseline justify-between mt-1.5">
-            <span className="text-lg font-black text-slate-900 font-mono leading-none">
+          <div className="flex items-baseline justify-between mt-1 sm:mt-1.5 flex-wrap gap-x-1">
+            <span className="text-base sm:text-lg font-black text-slate-900 font-mono leading-none">
               {summaryStats.totalCount}
             </span>
-            <span className="text-xs text-slate-500 font-mono font-medium">
+            <span className="text-[10px] sm:text-xs text-slate-500 font-mono font-medium truncate">
               ₹{summaryStats.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </span>
           </div>
@@ -179,27 +177,26 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
 
         {/* Paid Invoices */}
         <div
-          onClick={() => setStatusFilter('PAID')}
-          className={`bg-white px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${
-            statusFilter === 'PAID'
-              ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/20'
-              : 'border-slate-200 hover:border-emerald-200'
-          }`}
-          title="Filter: Paid Invoices"
+          onClick={() => setStatusFilter(statusFilter === 'PAID' ? '' : 'PAID')}
+          className={`bg-white p-2.5 sm:px-3.5 sm:py-2.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${statusFilter === 'PAID'
+            ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/20'
+            : 'border-slate-200 hover:border-emerald-200'
+            }`}
+          title="Filter: Paid Invoices (Click to toggle)"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-600 truncate">
               Paid Invoices
             </span>
-            <span className="p-1 rounded-md bg-emerald-50 text-emerald-600">
+            <span className="p-1 rounded-md bg-emerald-50 text-emerald-600 shrink-0 ml-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
             </span>
           </div>
-          <div className="flex items-baseline justify-between mt-1.5">
-            <span className="text-lg font-black text-emerald-700 font-mono leading-none">
+          <div className="flex items-baseline justify-between mt-1 sm:mt-1.5 flex-wrap gap-x-1">
+            <span className="text-base sm:text-lg font-black text-emerald-700 font-mono leading-none">
               {summaryStats.paidCount}
             </span>
-            <span className="text-xs text-slate-500 font-mono font-medium">
+            <span className="text-[10px] sm:text-xs text-slate-500 font-mono font-medium truncate">
               ₹{summaryStats.paidAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </span>
           </div>
@@ -207,27 +204,26 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
 
         {/* Pending Invoices */}
         <div
-          onClick={() => setStatusFilter('PENDING')}
-          className={`bg-white px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${
-            statusFilter === 'PENDING'
-              ? 'border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/20'
-              : 'border-slate-200 hover:border-amber-200'
-          }`}
-          title="Filter: Pending Invoices"
+          onClick={() => setStatusFilter(statusFilter === 'PENDING' ? '' : 'PENDING')}
+          className={`bg-white p-2.5 sm:px-3.5 sm:py-2.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${statusFilter === 'PENDING'
+            ? 'border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/20'
+            : 'border-slate-200 hover:border-amber-200'
+            }`}
+          title="Filter: Pending Invoices (Click to toggle)"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-amber-600 truncate">
               Pending Invoices
             </span>
-            <span className="p-1 rounded-md bg-amber-50 text-amber-600">
+            <span className="p-1 rounded-md bg-amber-50 text-amber-600 shrink-0 ml-1">
               <Clock className="w-3.5 h-3.5" />
             </span>
           </div>
-          <div className="flex items-baseline justify-between mt-1.5">
-            <span className="text-lg font-black text-amber-700 font-mono leading-none">
+          <div className="flex items-baseline justify-between mt-1 sm:mt-1.5 flex-wrap gap-x-1">
+            <span className="text-base sm:text-lg font-black text-amber-700 font-mono leading-none">
               {summaryStats.pendingCount}
             </span>
-            <span className="text-xs text-slate-500 font-mono font-medium">
+            <span className="text-[10px] sm:text-xs text-slate-500 font-mono font-medium truncate">
               ₹{summaryStats.pendingAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </span>
           </div>
@@ -235,52 +231,35 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
 
         {/* Cancelled Invoices */}
         <div
-          onClick={() => setStatusFilter('CANCELLED')}
-          className={`bg-white px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${
-            statusFilter === 'CANCELLED'
-              ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/20'
-              : 'border-slate-200 hover:border-rose-200'
-          }`}
-          title="Filter: Cancelled Invoices"
+          onClick={() => setStatusFilter(statusFilter === 'CANCELLED' ? '' : 'CANCELLED')}
+          className={`bg-white p-2.5 sm:px-3.5 sm:py-2.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${statusFilter === 'CANCELLED'
+            ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/20'
+            : 'border-slate-200 hover:border-rose-200'
+            }`}
+          title="Filter: Cancelled Invoices (Click to toggle)"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-rose-600">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-rose-600 truncate">
               Cancel Invoices
             </span>
-            <span className="p-1 rounded-md bg-rose-50 text-rose-600">
+            <span className="p-1 rounded-md bg-rose-50 text-rose-600 shrink-0 ml-1">
               <Ban className="w-3.5 h-3.5" />
             </span>
           </div>
-          <div className="flex items-baseline justify-between mt-1.5">
-            <span className="text-lg font-black text-rose-700 font-mono leading-none">
+          <div className="flex items-baseline justify-between mt-1 sm:mt-1.5 flex-wrap gap-x-1">
+            <span className="text-base sm:text-lg font-black text-rose-700 font-mono leading-none">
               {summaryStats.cancelledCount}
             </span>
-            <span className="text-xs text-slate-500 font-mono font-medium">
+            <span className="text-[10px] sm:text-xs text-slate-500 font-mono font-medium truncate">
               ₹{summaryStats.cancelledAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="flex items-center space-x-1 p-1 bg-slate-100 rounded-xl w-full sm:w-auto overflow-x-auto">
-          {['', 'PENDING', 'PAID', 'CANCELLED'].map((st) => (
-            <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                statusFilter === st
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {st === '' ? 'Active Invoices' : st === 'INACTIVE' ? 'Inactive' : st}
-            </button>
-          ))}
-        </div>
-
-        <div className="relative w-full sm:w-80">
+      {/* Search & Actions Bar */}
+      <div className="bg-white p-2.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
+        <div className="relative flex-1 sm:max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
@@ -290,13 +269,13 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
             className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-end">
           <button
             onClick={onCreateNew}
-            className="flex items-center space-x-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-sm transition-all cursor-pointer"
+            className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-sm transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Create New Invoice</span>
+            <span>Create invoice</span>
           </button>
         </div>
       </div>
@@ -365,15 +344,14 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
                       <select
                         value={inv.status}
                         onChange={(e) => handleStatusChange(inv.id, e.target.value)}
-                        className={`text-xs font-bold px-2 py-1 rounded-lg border focus:outline-none cursor-pointer ${
-                          inv.status === 'PAID'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : inv.status === 'CANCELLED'
+                        className={`text-xs font-bold px-2 py-1 rounded-lg border focus:outline-none cursor-pointer ${inv.status === 'PAID'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : inv.status === 'CANCELLED'
                             ? 'bg-rose-50 text-rose-700 border-rose-200'
                             : inv.status === 'INACTIVE'
-                            ? 'bg-slate-100 text-slate-600 border-slate-300'
-                            : 'bg-amber-50 text-amber-700 border-amber-200'
-                        }`}
+                              ? 'bg-slate-100 text-slate-600 border-slate-300'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}
                       >
                         <option value="PENDING">PENDING</option>
                         <option value="PAID">PAID</option>
