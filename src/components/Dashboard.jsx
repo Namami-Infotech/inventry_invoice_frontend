@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { invoiceService, itemService, userService } from '../services/api';
 
+
 export default function Dashboard({ setActiveTab, onSelectInvoice, companySetting }) {
   const [stats, setStats] = useState({
     totalInvoices: 0,

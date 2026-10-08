@@ -555,25 +555,22 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                   className="bg-slate-50 font-bold text-center text-xs"
                   style={{ borderBottom: '1px solid #000000' }}
                 >
-                  <th className="py-2 px-1 text-center w-8" style={{ borderRight: '1px solid #000000' }}>
+                  <th style={{ borderRight: '1px solid #000000', padding: '8px 6px', verticalAlign: 'middle' }} className="text-center w-8">
                     Sl<br/>No.
                   </th>
-                  <th className="py-2 px-3 text-left" style={{ borderRight: '1px solid #000000' }}>
+                  <th style={{ borderRight: '1px solid #000000', padding: '8px 10px', verticalAlign: 'middle' }} className="text-left">
                     Description of Goods
                   </th>
-                  <th className="py-2 px-2 text-center w-24" style={{ borderRight: '1px solid #000000' }}>
+                  <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-center w-24">
                     HSN/SAC
                   </th>
-                  <th className="py-2 px-2 text-center w-20" style={{ borderRight: '1px solid #000000' }}>
+                  <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-center w-20">
                     Quantity
                   </th>
-                  <th className="py-2 px-2 text-right w-20" style={{ borderRight: '1px solid #000000' }}>
+                  <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-right w-20">
                     Rate
                   </th>
-                  {/* <th className="py-2 px-1 text-center w-14" style={{ borderRight: '1px solid #000000' }}>
-                    per
-                  </th> */}
-                  <th className="py-2 px-3 text-right w-24">
+                  <th style={{ padding: '8px 10px', verticalAlign: 'middle' }} className="text-right w-24">
                     Amount
                   </th>
                 </tr>
@@ -582,28 +579,25 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                 {items.map((item, idx) => (
                   <tr
                     key={item.id || idx}
-                    className="text-center text-xs text-black align-top"
-                    style={{ borderBottom: '1px solid #f0f0f0' }}
+                    className="text-center text-xs text-black"
+                    style={{ borderBottom: '1px solid #f0f0f0', verticalAlign: 'middle' }}
                   >
-                    <td className="py-2 px-1 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                    <td style={{ borderRight: '1px solid #000000', padding: '7px 6px', verticalAlign: 'middle' }} className="font-mono text-center">
                       {idx + 1}
                     </td>
-                    <td className="py-2 px-3 text-left font-bold" style={{ borderRight: '1px solid #000000' }}>
+                    <td style={{ borderRight: '1px solid #000000', padding: '7px 10px', verticalAlign: 'middle' }} className="text-left font-bold">
                       {item.itemName}
                     </td>
-                    <td className="py-2 px-2 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                    <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-center">
                       {item.hsnSac || '—'}
                     </td>
-                    <td className="py-2 px-2 text-center font-bold" style={{ borderRight: '1px solid #000000' }}>
+                    <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="text-center font-bold">
                       {item.qty} {item.unit || 'SET'}
                     </td>
-                    <td className="py-2 px-2 text-right font-mono" style={{ borderRight: '1px solid #000000' }}>
+                    <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="text-right font-mono">
                       {Number(item.pricePerUnit).toFixed(2)}
                     </td>
-                    {/* <td className="py-2 px-1 text-center font-medium" style={{ borderRight: '1px solid #000000' }}>
-                      {item.unit || 'SET'}
-                    </td> */}
-                    <td className="py-2 px-3 text-right font-mono font-bold">
+                    <td style={{ padding: '7px 10px', verticalAlign: 'middle' }} className="text-right font-mono font-bold">
                       {Number(item.taxableAmount).toFixed(2)}
                     </td>
                   </tr>
@@ -614,25 +608,25 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                   <>
                     <tr className="text-xs text-black font-bold">
                       <td style={{ borderRight: '1px solid #000000' }}></td>
-                      <td className="py-1 px-3 text-right font-bold tracking-wide" style={{ borderRight: '1px solid #000000' }}>
+                      <td style={{ borderRight: '1px solid #000000', padding: '7px 10px', verticalAlign: 'middle' }} className="text-right font-bold tracking-wide">
                         OUTPUT CGST
                       </td>
                       <td style={{ borderRight: '1px solid #000000' }}></td>
                       <td style={{ borderRight: '1px solid #000000' }}></td>
                       <td style={{ borderRight: '1px solid #000000' }}></td>
-                      <td className="py-1 px-3 text-right font-mono font-bold">
+                      <td style={{ padding: '7px 10px', verticalAlign: 'middle' }} className="text-right font-mono font-bold">
                         {Number(invoice.totalCgst).toFixed(2)}
                       </td>
                     </tr>
                     <tr className="text-xs text-black font-bold">
                       <td style={{ borderRight: '1px solid #000000' }}></td>
-                      <td className="py-1 px-3 text-right font-bold tracking-wide" style={{ borderRight: '1px solid #000000' }}>
+                      <td style={{ borderRight: '1px solid #000000', padding: '7px 10px', verticalAlign: 'middle' }} className="text-right font-bold tracking-wide">
                         OUTPUT SGST
                       </td>
                       <td style={{ borderRight: '1px solid #000000' }}></td>
                       <td style={{ borderRight: '1px solid #000000' }}></td>
                       <td style={{ borderRight: '1px solid #000000' }}></td>
-                      <td className="py-1 px-3 text-right font-mono font-bold">
+                      <td style={{ padding: '7px 10px', verticalAlign: 'middle' }} className="text-right font-mono font-bold">
                         {Number(invoice.totalSgst).toFixed(2)}
                       </td>
                     </tr>
@@ -640,13 +634,13 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                 ) : (
                   <tr className="text-xs text-black font-bold">
                     <td style={{ borderRight: '1px solid #000000' }}></td>
-                    <td className="py-1 px-3 text-right font-bold tracking-wide" style={{ borderRight: '1px solid #000000' }}>
+                    <td style={{ borderRight: '1px solid #000000', padding: '7px 10px', verticalAlign: 'middle' }} className="text-right font-bold tracking-wide">
                       OUTPUT IGST
                     </td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
-                    <td className="py-1 px-3 text-right font-mono font-bold">
+                    <td style={{ padding: '7px 10px', verticalAlign: 'middle' }} className="text-right font-mono font-bold">
                       {Number(invoice.totalIgst).toFixed(2)}
                     </td>
                   </tr>
@@ -657,145 +651,141 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                   className="font-bold text-center bg-slate-50 text-xs"
                   style={{ borderTop: '1px solid #000000', borderBottom: '1px solid #000000' }}
                 >
-                  <td colSpan={3} className="py-2 px-3 text-right font-bold" style={{ borderRight: '1px solid #000000' }}>
+                  <td colSpan={3} style={{ borderRight: '1px solid #000000', padding: '8px 10px', verticalAlign: 'middle' }} className="text-right font-bold">
                     Total
                   </td>
-                  <td className="py-2 px-2 text-center font-bold" style={{ borderRight: '1px solid #000000' }}>
+                  <td style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-center font-bold">
                     {totalQty} {items[0]?.unit || 'SET'}
                   </td>
                   <td style={{ borderRight: '1px solid #000000' }}></td>
-                  <td className="py-2 px-3 text-right font-mono font-bold">
+                  <td style={{ padding: '8px 10px', verticalAlign: 'middle' }} className="text-right font-mono font-bold">
                     ₹ {Number(invoice.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
 
                 {/* AMOUNT IN WORDS & E. & O.E */}
                 <tr style={{ borderBottom: '1px solid #000000' }}>
-                  <td colSpan={4} className="p-2.5 text-xs text-black">
+                  <td colSpan={4} style={{ padding: '10px 12px' }} className="text-xs text-black">
                     <span className="text-[10px] text-slate-700 block">Amount Chargeable (in words)</span>
                     <p className="font-bold text-xs text-black mt-0.5">{numberToWords(invoice.grandTotal)}</p>
                   </td>
-                  <td colSpan={2} className="p-2.5 text-right align-top">
+                  <td colSpan={2} style={{ padding: '10px 12px' }} className="text-right align-top">
                     <span className="font-bold text-xs">E. & O.E</span>
                   </td>
                 </tr>
 
                 {/* HSN/SAC TAX SUMMARY TABLE */}
                 <tr style={{ borderBottom: '1px solid #000000' }}>
-                  <td colSpan={6} className="p-2.5">
+                  <td colSpan={6} style={{ padding: '10px 12px' }}>
                     <table
                       className="w-full text-xs text-black border-collapse"
                       style={{ border: '1px solid #000000', borderCollapse: 'collapse' }}
                     >
                       <thead>
-                        <tr className="bg-slate-50 font-bold text-center" style={{ borderBottom: '1px solid #000000' }}>
-                          <th rowSpan={2} className="py-1 px-2 text-center" style={{ borderRight: '1px solid #000000' }}>
+                        <tr className="bg-slate-50 font-bold text-center text-xs" style={{ borderBottom: '1px solid #000000' }}>
+                          <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-center font-bold">
                             HSN/SAC
                           </th>
-                          <th rowSpan={2} className="py-1 px-2 text-right" style={{ borderRight: '1px solid #000000' }}>
+                          <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-right font-bold">
                             Taxable Value
                           </th>
                           {isSame ? (
                             <>
-                              <th colSpan={2} className="py-1 px-2 text-center" style={{ borderRight: '1px solid #000000' }}>
-                                CGST
+                              <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-center font-bold">
+                                CGST (Rate)
                               </th>
-                              <th colSpan={2} className="py-1 px-2 text-center" style={{ borderRight: '1px solid #000000' }}>
-                                SGST/UTGST
+                              <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-right font-bold">
+                                CGST (Amount)
+                              </th>
+                              <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-center font-bold">
+                                SGST (Rate)
+                              </th>
+                              <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-right font-bold">
+                                SGST (Amount)
                               </th>
                             </>
                           ) : (
-                            <th colSpan={2} className="py-1 px-2 text-center" style={{ borderRight: '1px solid #000000' }}>
-                              IGST
-                            </th>
+                            <>
+                              <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-center font-bold">
+                                IGST (Rate)
+                              </th>
+                              <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-right font-bold">
+                                IGST (Amount)
+                              </th>
+                            </>
                           )}
-                          <th rowSpan={2} className="py-1 px-2 text-right">
+                          <th style={{ padding: '8px 8px', verticalAlign: 'middle' }} className="text-right font-bold">
                             Total Tax Amount
                           </th>
-                        </tr>
-                        <tr className="bg-slate-50 text-[10px]" style={{ borderBottom: '1px solid #000000' }}>
-                          {isSame ? (
-                            <>
-                              <th className="py-0.5 px-1 text-center" style={{ borderRight: '1px solid #000000' }}>Rate</th>
-                              <th className="py-0.5 px-1 text-right" style={{ borderRight: '1px solid #000000' }}>Amount</th>
-                              <th className="py-0.5 px-1 text-center" style={{ borderRight: '1px solid #000000' }}>Rate</th>
-                              <th className="py-0.5 px-1 text-right" style={{ borderRight: '1px solid #000000' }}>Amount</th>
-                            </>
-                          ) : (
-                            <>
-                              <th className="py-0.5 px-1 text-center" style={{ borderRight: '1px solid #000000' }}>Rate</th>
-                              <th className="py-0.5 px-1 text-right" style={{ borderRight: '1px solid #000000' }}>Amount</th>
-                            </>
-                          )}
                         </tr>
                       </thead>
                       <tbody>
                         {hsnList.map((h, i) => (
                           <tr key={i} className="text-xs" style={{ borderBottom: '1px solid #000000' }}>
-                            <td className="py-1 px-2 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                            <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-center">
                               {h.hsnSac}
                             </td>
-                            <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                            <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                               {h.taxableAmount.toFixed(2)}
                             </td>
                             {isSame ? (
                               <>
-                                <td className="py-1 px-1 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                                <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-center">
                                   {h.cgstRate}%
                                 </td>
-                                <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                                <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                                   {h.cgstAmount.toFixed(2)}
                                 </td>
-                                <td className="py-1 px-1 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                                <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-center">
                                   {h.sgstRate}%
                                 </td>
-                                <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                                <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                                   {h.sgstAmount.toFixed(2)}
                                 </td>
                               </>
                             ) : (
                               <>
-                                <td className="py-1 px-1 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                                <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-center">
                                   {h.igstRate}%
                                 </td>
-                                <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                                <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                                   {h.igstAmount.toFixed(2)}
                                 </td>
                               </>
                             )}
-                            <td className="py-1 px-2 font-mono text-right font-bold">
+                            <td style={{ padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right font-bold">
                               {h.totalTax.toFixed(2)}
                             </td>
                           </tr>
                         ))}
                         {/* HSN TOTAL ROW */}
                         <tr className="font-bold text-xs bg-slate-50">
-                          <td className="py-1 px-2 text-right" style={{ borderRight: '1px solid #000000' }}>
+                          <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="text-right font-bold">
                             Total
                           </td>
-                          <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                          <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                             {Number(invoice.subtotal).toFixed(2)}
                           </td>
                           {isSame ? (
                             <>
                               <td style={{ borderRight: '1px solid #000000' }}></td>
-                              <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                              <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                                 {Number(invoice.totalCgst).toFixed(2)}
                               </td>
                               <td style={{ borderRight: '1px solid #000000' }}></td>
-                              <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                              <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                                 {Number(invoice.totalSgst).toFixed(2)}
                               </td>
                             </>
                           ) : (
                             <>
                               <td style={{ borderRight: '1px solid #000000' }}></td>
-                              <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                              <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                                 {Number(invoice.totalIgst).toFixed(2)}
                               </td>
                             </>
                           )}
-                          <td className="py-1 px-2 font-mono text-right font-bold">
+                          <td style={{ padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right font-bold">
                             {Number(invoice.totalTax).toFixed(2)}
                           </td>
                         </tr>

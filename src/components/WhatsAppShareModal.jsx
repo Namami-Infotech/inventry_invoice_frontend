@@ -72,6 +72,26 @@ export default function WhatsAppShareModal({
   const [isSaved, setIsSaved] = useState(false);
   const invoiceSheetRef = useRef(null);
 
+  // Detect mobile device or phone screen view
+  const [isMobileDevice, setIsMobileDevice] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const ua = navigator.userAgent || '';
+    const mobileUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    const smallScreen = window.innerWidth < 640;
+    return mobileUa || smallScreen;
+  });
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const ua = navigator.userAgent || '';
+      const mobileUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+      const smallScreen = window.innerWidth < 640;
+      setIsMobileDevice(mobileUa || smallScreen);
+    };
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Helper to persist phone number to DB and localStorage
   const persistPhone = async (cleanDigits) => {
     if (!cleanDigits || cleanDigits.length < 10) return;
@@ -254,24 +274,8 @@ export default function WhatsAppShareModal({
     const fileName = `${invoice.invoiceNumber || 'Tax-Invoice'}.pdf`;
     const blob = pdf.output('blob');
     const file = new File([blob], fileName, { type: 'application/pdf' });
-    const imageBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
 
-    return { pdf, blob, file, fileName, imageBlob };
-  };
-
-  // Helper to copy invoice image to clipboard for instant Ctrl+V into WhatsApp
-  const copyInvoiceImageToClipboard = async (imageBlob) => {
-    if (imageBlob && typeof navigator !== 'undefined' && navigator.clipboard && window.ClipboardItem) {
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({ 'image/png': imageBlob })
-        ]);
-        return true;
-      } catch (err) {
-        console.warn('Clipboard image write not permitted:', err);
-      }
-    }
-    return false;
+    return { pdf, blob, file, fileName };
   };
 
   // 1. Share via WhatsApp Web (Desktop)
@@ -285,14 +289,11 @@ export default function WhatsAppShareModal({
 
     try {
       setLoading(true);
-      setLoadingText('Generating Tax Invoice...');
+      setLoadingText('Generating Tax Invoice PDF...');
       setFeedback(null);
 
-      const { pdf, fileName, imageBlob } = await generatePdfFile();
+      const { pdf, fileName } = await generatePdfFile();
       pdf.save(fileName);
-
-      // Copy image to clipboard so user can simply press Ctrl+V in WhatsApp Web
-      const copiedImage = await copyInvoiceImageToClipboard(imageBlob);
 
       setLoadingText('Opening WhatsApp Web...');
       const message = formatWhatsAppInvoiceMessage({ invoice, company });
@@ -302,13 +303,11 @@ export default function WhatsAppShareModal({
 
       setFeedback({
         type: 'success',
-        text: copiedImage
-          ? `Invoice copied to clipboard! WhatsApp Web open hone par chat me Ctrl+V (Paste) dabayein, ya downloaded PDF (${fileName}) ko attach karein.`
-          : `PDF downloaded! WhatsApp Web me downloaded ${fileName} attach karein.`
+        text: `PDF (${fileName}) download ho gayi hai! WhatsApp Web chat me downloaded PDF file ko drag karein ya 📎 (Document) se attach karein.`
       });
     } catch (err) {
       console.error('WhatsApp Web share failed:', err);
-      setFeedback({ type: 'error', text: 'Failed to generate invoice for WhatsApp Web' });
+      setFeedback({ type: 'error', text: 'Failed to generate PDF for WhatsApp Web' });
     } finally {
       setLoading(false);
     }
@@ -325,26 +324,38 @@ export default function WhatsAppShareModal({
 
     try {
       setLoading(true);
-      setLoadingText('Opening WhatsApp with Customer Number...');
+      setLoadingText('Preparing Invoice PDF...');
       setFeedback(null);
 
-      const { pdf, fileName, imageBlob } = await generatePdfFile();
+      const { pdf, file, fileName } = await generatePdfFile();
       const message = formatWhatsAppInvoiceMessage({ invoice, company });
 
-      // 1. Copy high-res invoice image to clipboard for instant Ctrl+V paste in WhatsApp
-      const copiedImage = await copyInvoiceImageToClipboard(imageBlob);
+      // If user is on a mobile device (Android / iOS), use native file sharing to attach the PDF document directly
+      if (isMobileDevice && typeof navigator !== 'undefined' && navigator.share) {
+        setLoadingText('Attaching PDF to WhatsApp...');
+        try {
+          const shareResult = await shareInvoiceFile({
+            file,
+            title: `Invoice ${invoice.invoiceNumber}`,
+            text: message
+          });
+          if (shareResult.success) {
+            setFeedback({
+              type: 'success',
+              text: `Invoice PDF attached successfully! WhatsApp me Send karein.`
+            });
+            return;
+          }
+        } catch (e) {}
+      }
 
-      // 2. Auto-save PDF on device
+      // On Desktop: auto-download PDF and directly launch WhatsApp with customer's number
       pdf.save(fileName);
-
-      // 3. Directly launch WhatsApp targeting this exact customer's phone number
       openWhatsAppApp({ phone: cleanPhone, message });
 
       setFeedback({
         type: 'success',
-        text: copiedImage
-          ? `WhatsApp opened for +${cleanPhone}! Invoice copied to clipboard — press Ctrl+V (Paste) in chat, or drag downloaded ${fileName}.`
-          : `WhatsApp opened for +${cleanPhone}! PDF (${fileName}) saved to your device.`
+        text: `WhatsApp open ho gaya hai! Downloaded PDF (${fileName}) ko chat me drag karein ya 📎 (Document) par click karke PDF send karein.`
       });
     } catch (err) {
       console.error('WhatsApp App share failed:', err);
@@ -477,28 +488,32 @@ export default function WhatsAppShareModal({
             </div>
           )}
 
-          {/* Action Buttons: Web and App */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-            {/* 1. WhatsApp Web (Desktop) */}
-            <button
-              type="button"
-              onClick={handleShareWeb}
-              disabled={loading}
-              className="flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
-            >
-              <Globe className="w-4 h-4 text-emerald-600" />
-              <span>WhatsApp Web</span>
-            </button>
+          {/* Action Buttons: Phone view shows single button, Desktop/Laptop shows both */}
+          <div className={`grid gap-2.5 pt-1 ${!isMobileDevice ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+            {/* 1. WhatsApp Web (Desktop/Laptop only - hidden on phone view) */}
+            {!isMobileDevice && (
+              <button
+                type="button"
+                onClick={handleShareWeb}
+                disabled={loading}
+                className="hidden sm:flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+              >
+                <Globe className="w-4 h-4 text-emerald-600" />
+                <span>WhatsApp Web</span>
+              </button>
+            )}
 
-            {/* 2. WhatsApp App */}
+            {/* 2. WhatsApp App / Share on WhatsApp */}
             <button
               type="button"
               onClick={handleShareApp}
               disabled={loading}
-              className="flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-600/30 transition-all cursor-pointer disabled:opacity-50"
+              className={`flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-600/30 transition-all cursor-pointer disabled:opacity-50 ${
+                isMobileDevice ? 'w-full py-3 text-sm' : ''
+              }`}
             >
               <Smartphone className="w-4 h-4" />
-              <span>WhatsApp App</span>
+              <span>{isMobileDevice ? 'Share on WhatsApp' : 'WhatsApp App'}</span>
             </button>
           </div>
 
@@ -722,211 +737,205 @@ export default function WhatsAppShareModal({
 
               {/* Items Table Header */}
               <tr className="bg-white text-[11px] font-bold text-black" style={{ borderBottom: '1px solid #000000' }}>
-                <th className="py-1 px-1.5 text-center w-8" style={{ borderRight: '1px solid #000000' }}>Sl No.</th>
-                <th className="py-1 px-2 text-left" style={{ borderRight: '1px solid #000000' }}>Description of Goods</th>
-                <th className="py-1 px-2 text-center w-20" style={{ borderRight: '1px solid #000000' }}>HSN/SAC</th>
-                <th className="py-1 px-2 text-center w-16" style={{ borderRight: '1px solid #000000' }}>Quantity</th>
-                <th className="py-1 px-2 text-right w-16" style={{ borderRight: '1px solid #000000' }}>Rate</th>
-                {/* <th className="py-1 px-2 text-center w-12" style={{ borderRight: '1px solid #000000' }}>per</th> */}
-                <th className="py-1 px-2 text-right w-20">Amount</th>
+                <th style={{ borderRight: '1px solid #000000', padding: '8px 6px', verticalAlign: 'middle' }} className="text-center w-8">Sl No.</th>
+                <th style={{ borderRight: '1px solid #000000', padding: '8px 10px', verticalAlign: 'middle' }} className="text-left">Description of Goods</th>
+                <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-center w-20">HSN/SAC</th>
+                <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-center w-16">Quantity</th>
+                <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-right w-16">Rate</th>
+                <th style={{ padding: '8px 10px', verticalAlign: 'middle' }} className="text-right w-20">Amount</th>
               </tr>
 
               {/* Line Items */}
               {(invoice.items || []).map((item, idx) => (
-                <tr key={idx} className="text-xs text-black" style={{ verticalAlign: 'top' }}>
-                  <td className="py-1 px-1.5 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>{idx + 1}</td>
-                  <td className="py-1 px-2 font-bold text-black" style={{ borderRight: '1px solid #000000' }}>{item.itemName}</td>
-                  <td className="py-1 px-2 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>{item.hsnSac || ''}</td>
-                  <td className="py-1 px-2 font-mono font-bold text-center" style={{ borderRight: '1px solid #000000' }}>{item.qty} {item.unit}</td>
-                  <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>{Number(item.pricePerUnit).toFixed(2)}</td>
-                  {/* <td className="py-1 px-2 text-center uppercase" style={{ borderRight: '1px solid #000000' }}>{item.unit}</td> */}
-                  <td className="py-1 px-2 font-mono font-bold text-right">{Number(item.taxableAmount).toFixed(2)}</td>
+                <tr key={idx} className="text-xs text-black" style={{ verticalAlign: 'middle' }}>
+                  <td style={{ borderRight: '1px solid #000000', padding: '7px 6px', verticalAlign: 'middle' }} className="font-mono text-center">{idx + 1}</td>
+                  <td style={{ borderRight: '1px solid #000000', padding: '7px 10px', verticalAlign: 'middle' }} className="font-bold text-black">{item.itemName}</td>
+                  <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-center">{item.hsnSac || ''}</td>
+                  <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono font-bold text-center">{item.qty} {item.unit}</td>
+                  <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">{Number(item.pricePerUnit).toFixed(2)}</td>
+                  <td style={{ padding: '7px 10px', verticalAlign: 'middle' }} className="font-mono font-bold text-right">{Number(item.taxableAmount).toFixed(2)}</td>
                 </tr>
               ))}
 
               {/* Tax Rows embedded in table */}
               {isSame ? (
                 <>
-                  <tr className="text-xs text-black">
+                  <tr className="text-xs text-black font-bold">
                     <td style={{ borderRight: '1px solid #000000' }}></td>
-                    <td className="py-0.5 px-2 font-bold text-right uppercase tracking-wider text-black" style={{ borderRight: '1px solid #000000' }}>OUTPUT CGST</td>
+                    <td style={{ borderRight: '1px solid #000000', padding: '7px 10px', verticalAlign: 'middle' }} className="font-bold text-right uppercase tracking-wider text-black">OUTPUT CGST</td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
-                    <td className="py-0.5 px-2 font-mono font-bold text-right">{Number(invoice.totalCgst || 0).toFixed(2)}</td>
+                    <td style={{ padding: '7px 10px', verticalAlign: 'middle' }} className="font-mono font-bold text-right">{Number(invoice.totalCgst || 0).toFixed(2)}</td>
                   </tr>
-                  <tr className="text-xs text-black">
+                  <tr className="text-xs text-black font-bold">
                     <td style={{ borderRight: '1px solid #000000' }}></td>
-                    <td className="py-0.5 px-2 font-bold text-right uppercase tracking-wider text-black" style={{ borderRight: '1px solid #000000' }}>OUTPUT SGST</td>
+                    <td style={{ borderRight: '1px solid #000000', padding: '7px 10px', verticalAlign: 'middle' }} className="font-bold text-right uppercase tracking-wider text-black">OUTPUT SGST</td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
                     <td style={{ borderRight: '1px solid #000000' }}></td>
-                    <td className="py-0.5 px-2 font-mono font-bold text-right">{Number(invoice.totalSgst || 0).toFixed(2)}</td>
+                    <td style={{ padding: '7px 10px', verticalAlign: 'middle' }} className="font-mono font-bold text-right">{Number(invoice.totalSgst || 0).toFixed(2)}</td>
                   </tr>
                 </>
               ) : (
-                <tr className="text-xs text-black">
+                <tr className="text-xs text-black font-bold">
                   <td style={{ borderRight: '1px solid #000000' }}></td>
-                  <td className="py-0.5 px-2 font-bold text-right uppercase tracking-wider text-black" style={{ borderRight: '1px solid #000000' }}>OUTPUT IGST</td>
+                  <td style={{ borderRight: '1px solid #000000', padding: '7px 10px', verticalAlign: 'middle' }} className="font-bold text-right uppercase tracking-wider text-black">OUTPUT IGST</td>
                   <td style={{ borderRight: '1px solid #000000' }}></td>
                   <td style={{ borderRight: '1px solid #000000' }}></td>
                   <td style={{ borderRight: '1px solid #000000' }}></td>
-                  <td className="py-0.5 px-2 font-mono font-bold text-right">{Number(invoice.totalIgst || 0).toFixed(2)}</td>
+                  <td style={{ padding: '7px 10px', verticalAlign: 'middle' }} className="font-mono font-bold text-right">{Number(invoice.totalIgst || 0).toFixed(2)}</td>
                 </tr>
               )}
 
               {/* Total Row */}
               <tr className="font-bold text-xs bg-white text-black" style={{ borderTop: '1px solid #000000', borderBottom: '1px solid #000000' }}>
                 <td style={{ borderRight: '1px solid #000000' }}></td>
-                <td className="py-1 px-2 text-right" style={{ borderRight: '1px solid #000000' }}>Total</td>
+                <td style={{ borderRight: '1px solid #000000', padding: '8px 10px', verticalAlign: 'middle' }} className="text-right font-bold">Total</td>
                 <td style={{ borderRight: '1px solid #000000' }}></td>
-                <td className="py-1 px-2 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                <td style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="font-mono text-center font-bold">
                   {(invoice.items || []).reduce((sum, item) => sum + (Number(item.qty) || 0), 0)} {(invoice.items?.[0]?.unit || 'SET')}
                 </td>
                 <td style={{ borderRight: '1px solid #000000' }}></td>
-                <td className="py-1 px-2 font-mono font-black text-right">
+                <td style={{ padding: '8px 10px', verticalAlign: 'middle' }} className="font-mono font-black text-right">
                   ₹ {Number(invoice.grandTotal || 0).toFixed(2)}
                 </td>
               </tr>
 
               {/* Amount Chargeable In Words */}
               <tr style={{ borderBottom: '1px solid #000000' }}>
-                <td colSpan={4} className="p-2 text-xs">
+                <td colSpan={4} style={{ padding: '10px 12px' }} className="text-xs">
                   <div>
                     <span className="text-[10px] text-slate-700 block">Amount Chargeable (in words)</span>
-                    <strong className="text-xs uppercase text-black font-bold block">
+                    <strong className="text-xs uppercase text-black font-bold block mt-0.5">
                       {numberToWords(invoice.grandTotal)}
                     </strong>
                   </div>
                 </td>
-                <td colSpan={2} className="p-2 text-right align-top">
+                <td colSpan={2} style={{ padding: '10px 12px' }} className="text-right align-top">
                   <span className="text-[11px] font-bold text-black">E. & O.E</span>
                 </td>
               </tr>
 
               {/* HSN/SAC TAX SUMMARY TABLE */}
               <tr style={{ borderBottom: '1px solid #000000' }}>
-                <td colSpan={6} className="p-2.5">
+                <td colSpan={6} style={{ padding: '10px 12px' }}>
                   <table
                     className="w-full text-xs text-black border-collapse"
                     style={{ border: '1px solid #000000', borderCollapse: 'collapse' }}
                   >
                     <thead>
-                      <tr className="bg-slate-50 font-bold text-center" style={{ borderBottom: '1px solid #000000' }}>
-                        <th rowSpan={2} className="py-1 px-2 text-center" style={{ borderRight: '1px solid #000000' }}>
+                      <tr className="bg-slate-50 font-bold text-center text-xs" style={{ borderBottom: '1px solid #000000' }}>
+                        <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-center font-bold">
                           HSN/SAC
                         </th>
-                        <th rowSpan={2} className="py-1 px-2 text-right" style={{ borderRight: '1px solid #000000' }}>
+                        <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-right font-bold">
                           Taxable Value
                         </th>
                         {isSame ? (
                           <>
-                            <th colSpan={2} className="py-1 px-2 text-center" style={{ borderRight: '1px solid #000000' }}>
-                              CGST
+                            <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-center font-bold">
+                              CGST (Rate)
                             </th>
-                            <th colSpan={2} className="py-1 px-2 text-center" style={{ borderRight: '1px solid #000000' }}>
-                              SGST/UTGST
+                            <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-right font-bold">
+                              CGST (Amount)
+                            </th>
+                            <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-center font-bold">
+                              SGST (Rate)
+                            </th>
+                            <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-right font-bold">
+                              SGST (Amount)
                             </th>
                           </>
                         ) : (
-                          <th colSpan={2} className="py-1 px-2 text-center" style={{ borderRight: '1px solid #000000' }}>
-                            IGST
-                          </th>
+                          <>
+                            <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-center font-bold">
+                              IGST (Rate)
+                            </th>
+                            <th style={{ borderRight: '1px solid #000000', padding: '8px 8px', verticalAlign: 'middle' }} className="text-right font-bold">
+                              IGST (Amount)
+                            </th>
+                          </>
                         )}
-                        <th rowSpan={2} className="py-1 px-2 text-right">
+                        <th style={{ padding: '8px 8px', verticalAlign: 'middle' }} className="text-right font-bold">
                           Total Tax Amount
                         </th>
-                      </tr>
-                      <tr className="bg-slate-50 text-[10px]" style={{ borderBottom: '1px solid #000000' }}>
-                        {isSame ? (
-                          <>
-                            <th className="py-0.5 px-1 text-center" style={{ borderRight: '1px solid #000000' }}>Rate</th>
-                            <th className="py-0.5 px-1 text-right" style={{ borderRight: '1px solid #000000' }}>Amount</th>
-                            <th className="py-0.5 px-1 text-center" style={{ borderRight: '1px solid #000000' }}>Rate</th>
-                            <th className="py-0.5 px-1 text-right" style={{ borderRight: '1px solid #000000' }}>Amount</th>
-                          </>
-                        ) : (
-                          <>
-                            <th className="py-0.5 px-1 text-center" style={{ borderRight: '1px solid #000000' }}>Rate</th>
-                            <th className="py-0.5 px-1 text-right" style={{ borderRight: '1px solid #000000' }}>Amount</th>
-                          </>
-                        )}
                       </tr>
                     </thead>
                     <tbody>
                       {hsnList.map((h, i) => (
                         <tr key={i} className="text-xs" style={{ borderBottom: '1px solid #000000' }}>
-                          <td className="py-1 px-2 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                          <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-center">
                             {h.hsnSac}
                           </td>
-                          <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                          <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                             {h.taxableAmount.toFixed(2)}
                           </td>
                           {isSame ? (
                             <>
-                              <td className="py-1 px-1 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                              <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-center">
                                 {h.cgstRate}%
                               </td>
-                              <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                              <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                                 {h.cgstAmount.toFixed(2)}
                               </td>
-                              <td className="py-1 px-1 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                              <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-center">
                                 {h.sgstRate}%
                               </td>
-                              <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                              <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                                 {h.sgstAmount.toFixed(2)}
                               </td>
                             </>
                           ) : (
                             <>
-                              <td className="py-1 px-1 font-mono text-center" style={{ borderRight: '1px solid #000000' }}>
+                              <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-center">
                                 {h.igstRate}%
                               </td>
-                              <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                              <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                                 {h.igstAmount.toFixed(2)}
                               </td>
                             </>
                           )}
-                          <td className="py-1 px-2 font-mono text-right font-bold">
+                          <td style={{ padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right font-bold">
                             {h.totalTax.toFixed(2)}
                           </td>
                         </tr>
                       ))}
                       {/* HSN TOTAL ROW */}
                       <tr className="font-bold text-xs bg-slate-50">
-                        <td className="py-1 px-2 text-right" style={{ borderRight: '1px solid #000000' }}>
+                        <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="text-right font-bold">
                           Total
                         </td>
-                        <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                        <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                           {Number(invoice.subtotal).toFixed(2)}
                         </td>
                         {isSame ? (
                           <>
                             <td style={{ borderRight: '1px solid #000000' }}></td>
-                            <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                            <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                               {Number(invoice.totalCgst).toFixed(2)}
                             </td>
                             <td style={{ borderRight: '1px solid #000000' }}></td>
-                            <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                            <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                               {Number(invoice.totalSgst).toFixed(2)}
                             </td>
                           </>
                         ) : (
                           <>
                             <td style={{ borderRight: '1px solid #000000' }}></td>
-                            <td className="py-1 px-2 font-mono text-right" style={{ borderRight: '1px solid #000000' }}>
+                            <td style={{ borderRight: '1px solid #000000', padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right">
                               {Number(invoice.totalIgst).toFixed(2)}
                             </td>
                           </>
                         )}
-                        <td className="py-1 px-2 font-mono text-right font-bold">
+                        <td style={{ padding: '7px 8px', verticalAlign: 'middle' }} className="font-mono text-right font-bold">
                           {Number(invoice.totalTax).toFixed(2)}
                         </td>
                       </tr>
                     </tbody>
                   </table>
 
-                  <div className="pt-2 text-xs">
+                  <div className="pt-2.5 text-xs">
                     <span className="font-semibold">Tax Amount (in words) : </span>
                     <span className="font-bold">{numberToWords(invoice.totalTax)}</span>
                   </div>
