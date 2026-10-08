@@ -35,7 +35,7 @@ export default function Login({ onLoginSuccess, companySetting }) {
       setLoading(true);
       setError('');
       const res = await authService.login(identifier.trim(), password);
-      
+
       if (res.data?.success) {
         const { token, user } = res.data;
         authService.saveSession(token, user);

@@ -11,18 +11,21 @@ import {
   RefreshCw,
   IndianRupee,
   Filter,
-  Printer
+  Printer,
+  Share2
 } from 'lucide-react';
 import { invoiceService } from '../services/api';
 import Pagination from './Pagination';
 import DeleteConfirmModal from './DeleteConfirmModal';
+import WhatsAppShareModal from './WhatsAppShareModal';
 import { formatDateDDMMYYYY } from '../utils/date';
 
-export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState }) {
+export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState, companySetting }) {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
+  const [shareTarget, setShareTarget] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [summaryStats, setSummaryStats] = useState({
@@ -379,10 +382,19 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
                     </td>
 
                     <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center space-x-2">
+                      <div className="flex items-center justify-center space-x-1.5 sm:space-x-2">
+                        <button
+                          onClick={() => setShareTarget(inv)}
+                          className="flex items-center space-x-1.5 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer border border-emerald-200"
+                          title="Share Invoice on WhatsApp"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                          <span>Share</span>
+                        </button>
+
                         <button
                           onClick={() => onSelectInvoice(inv)}
-                          className="flex items-center space-x-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                          className="flex items-center space-x-1.5 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                           title="View / Print / Download A4 PDF"
                         >
                           <Printer className="w-3.5 h-3.5" />
@@ -427,6 +439,22 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
         message="Are you sure you want to delete this invoice? The status will be marked as INACTIVE and hidden from active invoices."
         confirmText="Mark Inactive"
       />
+
+      {/* WhatsApp Share Modal */}
+      {shareTarget && (
+        <WhatsAppShareModal
+          isOpen={!!shareTarget}
+          invoice={shareTarget}
+          companySetting={companySetting}
+          onClose={() => setShareTarget(null)}
+          onInvoiceUpdate={(updatedInv) => {
+            setInvoices((prev) =>
+              prev.map((i) => (i.id === updatedInv.id ? { ...i, ...updatedInv } : i))
+            );
+            setShareTarget((prev) => (prev && prev.id === updatedInv.id ? { ...prev, ...updatedInv } : prev));
+          }}
+        />
+      )}
     </div>
   );
 }

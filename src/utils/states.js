@@ -37,19 +37,71 @@ export const INDIAN_STATES = [
   'West Bengal'
 ];
 
+export const STATE_GST_CODES = {
+  'andaman and nicobar islands': '35',
+  'andhra pradesh': '28',
+  'arunachal pradesh': '12',
+  'assam': '18',
+  'bihar': '10',
+  'chandigarh': '04',
+  'chhattisgarh': '22',
+  'dadra and nagar haveli and daman and diu': '26',
+  'daman and diu': '25',
+  'delhi': '07',
+  'goa': '30',
+  'gujarat': '24',
+  'haryana': '06',
+  'himachal pradesh': '02',
+  'jammu and kashmir': '01',
+  'jharkhand': '20',
+  'karnataka': '29',
+  'kerala': '32',
+  'ladakh': '38',
+  'lakshadweep': '31',
+  'madhya pradesh': '23',
+  'maharashtra': '27',
+  'manipur': '14',
+  'meghalaya': '17',
+  'mizoram': '15',
+  'nagaland': '13',
+  'odisha': '21',
+  'puducherry': '34',
+  'punjab': '03',
+  'rajasthan': '08',
+  'sikkim': '11',
+  'tamil nadu': '33',
+  'telangana': '36',
+  'tripura': '16',
+  'uttar pradesh': '09',
+  'uttarakhand': '05',
+  'west bengal': '19'
+};
+
+export function getStateCode(stateName, gstin) {
+  if (gstin && typeof gstin === 'string' && /^\d{2}/.test(gstin.trim())) {
+    return gstin.trim().slice(0, 2);
+  }
+  if (stateName && typeof stateName === 'string') {
+    const key = stateName.trim().toLowerCase();
+    return STATE_GST_CODES[key] || '';
+  }
+  return '';
+}
+
 export const UNITS = [
   'Pcs',
   'Nos',
-  // 'Kg',
-  // 'Mtr',
-  // 'Box',
-  // 'Pack',
-  // 'Set',
-  // 'Ltr',
-  // 'Hour',
-  // 'Day',
-  // 'Month',
-  // 'Year'
+  'SET',
+  'Kg',
+  'Mtr',
+  'Box',
+  'Pack',
+  'Ltr',
+  'Hour',
+  'Day',
+  'Month',
+  'Year'
 ];
 
 export const GST_RATES = [0, 5, 12, 18, 28];
+

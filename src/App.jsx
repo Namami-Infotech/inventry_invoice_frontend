@@ -3,7 +3,8 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import ItemModule from './components/ItemModule';
-import UserModule from './components/UserModule';
+// import UserModule from './components/UserModule';
+import ReportModule from './components/ReportModule';
 import SettingModule from './components/SettingModule';
 import InvoiceCreate from './components/InvoiceCreate';
 import InvoiceList from './components/InvoiceList';
@@ -54,7 +55,7 @@ export default function App() {
       document.title = `${companySetting.companyName} - Dual-GST Tax Invoice Engine`;
       try {
         localStorage.setItem('company_name', companySetting.companyName);
-      } catch (err) {}
+      } catch (err) { }
     }
   }, [companySetting]);
 
@@ -124,6 +125,7 @@ export default function App() {
                 onSelectInvoice={(inv) => setViewingInvoice(inv)}
                 onCreateNew={() => setActiveTab('create-invoice')}
                 companyState={companySetting?.state}
+                companySetting={companySetting}
               />
             )}
 
@@ -137,8 +139,12 @@ export default function App() {
 
             {activeTab === 'items' && <ItemModule />}
 
-            {activeTab === 'users' && (
+            {/* {activeTab === 'users' && (
               <UserModule companyState={companySetting?.state} />
+            )} */}
+
+            {activeTab === 'reports' && (
+              <ReportModule companySetting={companySetting} />
             )}
 
             {activeTab === 'settings' && (

@@ -22,7 +22,8 @@ export default function Header({
     invoices: { title: 'Invoices Directory', subtitle: 'Manage, search and print issued GST invoices' },
     'create-invoice': { title: 'Generate Tax Invoice', subtitle: 'Automated Dual-GST calculation based on state' },
     items: { title: 'Items Catalog', subtitle: 'Products, services, HSN/SAC codes and rates' },
-    users: { title: 'Users & Roles', subtitle: 'Manage USER (clients) and ADMIN profiles' },
+    reports: { title: 'GST Compliance & Reports', subtitle: 'GST Sales Register, HSN/SAC Summary & Tax Liability' },
+    // users: { title: 'Users & Roles', subtitle: 'Manage USER (clients) and ADMIN profiles' },
     settings: { title: 'Company Settings', subtitle: 'Business profile, GSTIN, HSA and bank details' }
   };
 

@@ -174,32 +174,29 @@ export default function UserModule({ companyState }) {
         <div className="flex items-center space-x-1 p-1 bg-slate-100 rounded-xl w-full lg:w-auto overflow-x-auto">
           <button
             onClick={() => setRoleFilter('')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-              roleFilter === ''
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${roleFilter === ''
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
-            }`}
+              }`}
           >
             All Roles
           </button>
           <button
             onClick={() => setRoleFilter('USER')}
-            className={`flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-              roleFilter === 'USER'
+            className={`flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${roleFilter === 'USER'
                 ? 'bg-white text-emerald-700 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
-            }`}
+              }`}
           >
             <UserIcon className="w-3.5 h-3.5" />
             <span>USER (Clients)</span>
           </button>
           <button
             onClick={() => setRoleFilter('ADMIN')}
-            className={`flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-              roleFilter === 'ADMIN'
+            className={`flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${roleFilter === 'ADMIN'
                 ? 'bg-white text-purple-700 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
-            }`}
+              }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>ADMIN (Staff)</span>
@@ -438,9 +435,9 @@ export default function UserModule({ companyState }) {
                     className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all shadow-2xs"
                   />
                 </div>
-                 <div>
+                <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                   GST Number (optional)
+                    GST Number (optional)
                   </label>
                   <input
                     type="text"

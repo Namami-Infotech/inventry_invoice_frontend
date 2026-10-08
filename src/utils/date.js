@@ -40,6 +40,42 @@ export function formatDateDDMMYYYY(dateVal) {
 }
 
 /**
+ * Format date to DD-Mon-YY format (e.g. 13-Aug-26) matching standard Tax Invoice PDF
+ */
+export function formatDateDDMonYYYY(dateVal) {
+  if (!dateVal) return '';
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  try {
+    let d;
+    if (typeof dateVal === 'string') {
+      const clean = dateVal.trim();
+      const isoParts = clean.split('T')[0].split('-');
+      if (isoParts.length === 3 && isoParts[0].length === 4) {
+        d = new Date(Number(isoParts[0]), Number(isoParts[1]) - 1, Number(isoParts[2]));
+      } else if (clean.includes('/')) {
+        const parts = clean.split('/');
+        if (parts.length === 3) {
+          d = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+        } else {
+          d = new Date(dateVal);
+        }
+      } else {
+        d = new Date(dateVal);
+      }
+    } else {
+      d = new Date(dateVal);
+    }
+    if (isNaN(d.getTime())) return formatDateDDMMYYYY(dateVal);
+    const day = String(d.getDate()).padStart(2, '0');
+    const mon = months[d.getMonth()];
+    const yr = String(d.getFullYear()).slice(-2);
+    return `${day}-${mon}-${yr}`;
+  } catch {
+    return formatDateDDMMYYYY(dateVal);
+  }
+}
+
+/**
  * Convert DD/MM/YYYY or DD-MM-YYYY to YYYY-MM-DD for backend storage/API
  * @param {string} ddMMyyyy
  * @returns {string} YYYY-MM-DD

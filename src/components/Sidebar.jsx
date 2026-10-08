@@ -9,7 +9,8 @@ import {
   Sparkles,
   ChevronRight,
   X,
-  LogOut
+  LogOut,
+  FileSpreadsheet
 } from 'lucide-react';
 
 export default function Sidebar({
@@ -34,11 +35,17 @@ export default function Sidebar({
       icon: Package,
       desc: 'HSN/SAC & Rates'
     },
-    {
+    /* {
       id: 'users',
       label: 'Clients',
       icon: Users,
       desc: 'Manage clients'
+    }, */
+    {
+      id: 'reports',
+      label: 'GST Reports',
+      icon: FileSpreadsheet,
+      desc: 'Sales, HSN & Tax Liability'
     },
     {
       id: 'settings',
@@ -65,9 +72,8 @@ export default function Sidebar({
 
       {/* Sidebar Container with optimized viewport height */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-slate-900 text-white flex flex-col transition-transform duration-300 ease-in-out border-r border-slate-800 no-print lg:translate-x-0 h-screen max-h-screen ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-slate-900 text-white flex flex-col transition-transform duration-300 ease-in-out border-r border-slate-800 no-print lg:translate-x-0 h-screen max-h-screen ${mobileOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         {/* Brand Header (Sleek h-16 / 64px) */}
         <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800/80 flex-shrink-0">
@@ -108,7 +114,7 @@ export default function Sidebar({
           </button>
         </div>
 
-       
+
 
         {/* Navigation Links with comfortable compact height */}
         <nav className="flex-1 px-2.5 py-1 space-y-1 overflow-y-auto">
@@ -123,26 +129,23 @@ export default function Sidebar({
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full h-11 flex items-center justify-between px-3 rounded-xl text-left transition-all ${
-                  isActive
+                className={`w-full h-11 flex items-center justify-between px-3 rounded-xl text-left transition-all ${isActive
                     ? 'bg-indigo-600 text-white font-semibold shadow-xs'
                     : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-                }`}
+                  }`}
               >
                 <div className="flex items-center space-x-2.5 min-w-0">
                   <div
-                    className={`p-1.5 rounded-lg flex-shrink-0 ${
-                      isActive ? 'bg-white/20 text-white' : 'text-slate-400'
-                    }`}
+                    className={`p-1.5 rounded-lg flex-shrink-0 ${isActive ? 'bg-white/20 text-white' : 'text-slate-400'
+                      }`}
                   >
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="truncate">
                     <div className="text-xs font-medium leading-tight">{item.label}</div>
                     <div
-                      className={`text-[10px] leading-tight truncate ${
-                        isActive ? 'text-indigo-200' : 'text-slate-400'
-                      }`}
+                      className={`text-[10px] leading-tight truncate ${isActive ? 'text-indigo-200' : 'text-slate-400'
+                        }`}
                     >
                       {item.desc}
                     </div>
