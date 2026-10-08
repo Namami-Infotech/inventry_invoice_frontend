@@ -190,24 +190,29 @@ export function openWhatsAppDirect({ phone, message }) {
   const isMobile = typeof navigator !== 'undefined' &&
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+  const directUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
   const deepLink = `whatsapp://send?phone=${cleanPhone}&text=${encodedText}`;
-  const universalUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
 
   if (isMobile) {
-    // Mobile: open WhatsApp app directly to customer chat
-    window.location.href = deepLink;
+    // On mobile: api.whatsapp.com is WhatsApp's universal link that triggers the app directly to that chat
+    const link = document.createElement('a');
+    link.href = directUrl;
+    link.target = '_top';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Fallback if the link click didn't navigate immediately
     setTimeout(() => {
-      if (document.hasFocus && document.hasFocus()) {
-        window.location.href = universalUrl;
-      }
-    }, 1000);
+      window.location.href = directUrl;
+    }, 400);
   } else {
     // Desktop: directly launch WhatsApp desktop app or open customer chat URL
-    // Trigger deep link for WhatsApp Desktop app
     window.location.href = deepLink;
     setTimeout(() => {
       if (document.hasFocus && document.hasFocus()) {
-        window.open(universalUrl, '_blank', 'noopener,noreferrer');
+        window.open(directUrl, '_blank', 'noopener,noreferrer');
       }
     }, 1200);
   }

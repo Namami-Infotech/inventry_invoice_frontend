@@ -330,32 +330,15 @@ export default function WhatsAppShareModal({
       const { pdf, file, fileName } = await generatePdfFile();
       const message = formatWhatsAppInvoiceMessage({ invoice, company });
 
-      // If user is on a mobile device (Android / iOS), use native file sharing to attach the PDF document directly
-      if (isMobileDevice && typeof navigator !== 'undefined' && navigator.share) {
-        setLoadingText('Attaching PDF to WhatsApp...');
-        try {
-          const shareResult = await shareInvoiceFile({
-            file,
-            title: `Invoice ${invoice.invoiceNumber}`,
-            text: message
-          });
-          if (shareResult.success) {
-            setFeedback({
-              type: 'success',
-              text: `Invoice PDF attached successfully! WhatsApp me Send karein.`
-            });
-            return;
-          }
-        } catch (e) {}
-      }
-
-      // On Desktop: auto-download PDF and directly launch WhatsApp with customer's number
+      // Auto-save PDF on device
       pdf.save(fileName);
+
+      // Directly launch WhatsApp targeting customer's phone number
       openWhatsAppApp({ phone: cleanPhone, message });
 
       setFeedback({
         type: 'success',
-        text: `WhatsApp open ho gaya hai! Downloaded PDF (${fileName}) ko chat me drag karein ya 📎 (Document) par click karke PDF send karein.`
+        text: `WhatsApp opened for +${cleanPhone}! Invoice text is pre-filled.`
       });
     } catch (err) {
       console.error('WhatsApp App share failed:', err);
