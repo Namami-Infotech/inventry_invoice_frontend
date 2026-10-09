@@ -27,6 +27,7 @@ import {
 import { invoiceService, userService } from '../services/api';
 import { formatDateDDMonYYYY } from '../utils/date';
 import { getStateCode } from '../utils/states';
+import { downloadInvoicePdf, sanitizeInvoiceFilename } from '../utils/pdfDownloadHelper';
 
 // Number to words helper for invoice representation
 function numberToWords(num) {
@@ -271,7 +272,7 @@ export default function WhatsAppShareModal({
       heightLeft -= pdfHeight;
     }
 
-    const fileName = `${invoice.invoiceNumber || 'Tax-Invoice'}.pdf`;
+    const fileName = sanitizeInvoiceFilename(invoice.invoiceNumber || 'Tax-Invoice');
     const blob = pdf.output('blob');
     const file = new File([blob], fileName, { type: 'application/pdf' });
 
@@ -292,8 +293,8 @@ export default function WhatsAppShareModal({
       setLoadingText('Generating Tax Invoice PDF...');
       setFeedback(null);
 
-      const { pdf, fileName } = await generatePdfFile();
-      pdf.save(fileName);
+      const { pdf, blob, fileName } = await generatePdfFile();
+      await downloadInvoicePdf(blob || pdf, fileName);
 
       setLoadingText('Opening WhatsApp Web...');
       const message = formatWhatsAppInvoiceMessage({ invoice, company });
@@ -303,7 +304,7 @@ export default function WhatsAppShareModal({
 
       setFeedback({
         type: 'success',
-        text: `PDF (${fileName}) download ho gayi hai! WhatsApp Web chat me downloaded PDF file ko drag karein ya 📎 (Document) se attach karein.`
+        text: `PDF (${fileName}) Downloads folder me save ho gayi hai! WhatsApp Web chat me downloaded PDF file ko drag karein ya 📎 (Document) se attach karein.`
       });
     } catch (err) {
       console.error('WhatsApp Web share failed:', err);
@@ -324,25 +325,55 @@ export default function WhatsAppShareModal({
 
     try {
       setLoading(true);
-      setLoadingText('Preparing Invoice PDF...');
+      setLoadingText('Invoice PDF taiyaar ho rahi hai...');
       setFeedback(null);
 
-      const { pdf, file, fileName } = await generatePdfFile();
+      const { pdf, file, fileName, blob } = await generatePdfFile();
       const message = formatWhatsAppInvoiceMessage({ invoice, company });
 
-      // Auto-save PDF on device
-      pdf.save(fileName);
+      // Step 1: Save PDF directly to the device's standard Downloads folder
+      setLoadingText('PDF Downloads folder me save ho rahi hai...');
+      await downloadInvoicePdf(blob || pdf, fileName);
+
+      // Step 2: Crucial delay on mobile devices!
+      // Gives Android/iOS Download Manager enough time to register and start the file download
+      // without getting aborted when WhatsApp app is launched.
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+
+      setLoadingText('WhatsApp open ho raha hai...');
 
       // Directly launch WhatsApp targeting customer's phone number
       openWhatsAppApp({ phone: cleanPhone, message });
 
       setFeedback({
         type: 'success',
-        text: `WhatsApp opened for +${cleanPhone}! Invoice text is pre-filled.`
+        text: `PDF (${fileName}) phone ke Downloads folder me save ho gayi hai aur customer ke WhatsApp par text chala gaya hai!`
       });
     } catch (err) {
       console.error('WhatsApp App share failed:', err);
       setFeedback({ type: 'error', text: 'Failed to open WhatsApp for this customer' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 3. Direct Download to Downloads Folder (Guaranteed to save in Downloads folder)
+  const handleDownloadOnly = async () => {
+    try {
+      setLoading(true);
+      setLoadingText('PDF generate kar ke Downloads folder me save ki ja rahi hai...');
+      setFeedback(null);
+
+      const { pdf, fileName, blob } = await generatePdfFile();
+      await downloadInvoicePdf(blob || pdf, fileName);
+
+      setFeedback({
+        type: 'success',
+        text: `Invoice PDF (${fileName}) aapke phone/device ke Downloads folder me save ho gayi hai!`
+      });
+    } catch (err) {
+      console.error('PDF direct download failed:', err);
+      setFeedback({ type: 'error', text: 'Failed to download PDF to Downloads folder' });
     } finally {
       setLoading(false);
     }
@@ -471,33 +502,74 @@ export default function WhatsAppShareModal({
             </div>
           )}
 
-          {/* Action Buttons: Phone view shows single button, Desktop/Laptop shows both */}
-          <div className={`grid gap-2.5 pt-1 ${!isMobileDevice ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
-            {/* 1. WhatsApp Web (Desktop/Laptop only - hidden on phone view) */}
-            {!isMobileDevice && (
+          {/* Action Buttons */}
+          {isMobileDevice ? (
+            <div className="space-y-2 pt-1">
+              {/* Primary: Share on WhatsApp (Auto-saves PDF & opens WhatsApp chat) */}
               <button
                 type="button"
-                onClick={handleShareWeb}
+                onClick={handleShareApp}
                 disabled={loading}
-                className="hidden sm:flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-600/30 transition-all cursor-pointer disabled:opacity-50"
               >
-                <Globe className="w-4 h-4 text-emerald-600" />
-                <span>WhatsApp Web</span>
+                <Smartphone className="w-4 h-4" />
+                <span>Share on WhatsApp</span>
               </button>
-            )}
 
-            {/* 2. WhatsApp App / Share on WhatsApp */}
-            <button
-              type="button"
-              onClick={handleShareApp}
-              disabled={loading}
-              className={`flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-600/30 transition-all cursor-pointer disabled:opacity-50 ${
-                isMobileDevice ? 'w-full py-3 text-sm' : ''
-              }`}
-            >
-              <Smartphone className="w-4 h-4" />
-              <span>{isMobileDevice ? 'Share on WhatsApp' : 'WhatsApp App'}</span>
-            </button>
+              {/* Secondary: Direct Download to Downloads Folder */}
+              <button
+                type="button"
+                onClick={handleDownloadOnly}
+                disabled={loading}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <Download className="w-4 h-4 text-emerald-600" />
+                <span>Download PDF to Phone (Downloads Folder)</span>
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2 pt-1">
+              <div className="grid grid-cols-2 gap-2.5">
+                {/* 1. WhatsApp Web */}
+                <button
+                  type="button"
+                  onClick={handleShareWeb}
+                  disabled={loading}
+                  className="flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <Globe className="w-4 h-4 text-emerald-600" />
+                  <span>WhatsApp Web</span>
+                </button>
+
+                {/* 2. WhatsApp App */}
+                <button
+                  type="button"
+                  onClick={handleShareApp}
+                  disabled={loading}
+                  className="flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-600/30 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <Smartphone className="w-4 h-4" />
+                  <span>WhatsApp App</span>
+                </button>
+              </div>
+
+              {/* 3. Direct Download to Downloads Folder */}
+              <button
+                type="button"
+                onClick={handleDownloadOnly}
+                disabled={loading}
+                className="w-full flex items-center justify-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-500" />
+                <span>Download PDF directly to Downloads folder</span>
+              </button>
+            </div>
+          )}
+
+          {/* Guaranteed Downloads Folder Notice */}
+          <div className="flex items-center justify-center space-x-1.5 text-[11px] text-slate-500 pt-0.5">
+            <Download className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+            <span>PDF hamesha device ke standard <strong>Downloads</strong> folder me save hoti hai</span>
           </div>
 
           {/* Loading status */}

@@ -14,6 +14,7 @@ import WhatsAppShareModal from './WhatsAppShareModal';
 import { settingService } from '../services/api';
 import { formatDateDDMMYYYY, formatDateDDMonYYYY } from '../utils/date';
 import { getStateCode } from '../utils/states';
+import { downloadInvoicePdf, sanitizeInvoiceFilename } from '../utils/pdfDownloadHelper';
 
 // Number to Indian words converter for GST invoices
 function numberToWords(num) {
@@ -57,6 +58,7 @@ function numberToWords(num) {
 export default function InvoiceViewModal({ invoice, companySetting, onClose, onStatusChange }) {
   const invoiceRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [currentSetting, setCurrentSetting] = useState(companySetting || null);
 
@@ -267,8 +269,10 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
         heightLeft -= pdfHeight;
       }
 
-      const fileName = `${invoice.invoiceNumber || 'Tax-Invoice'}.pdf`;
-      pdf.save(fileName);
+      const fileName = sanitizeInvoiceFilename(invoice.invoiceNumber || 'Tax-Invoice');
+      await downloadInvoicePdf(pdf, fileName);
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 4000);
     } catch (error) {
       console.error('PDF Generation failed:', error);
       alert('Could not generate PDF directly. Please use "Print A4" and choose "Save as PDF".');
@@ -325,15 +329,27 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
             <button
               onClick={handleDownloadPdf}
               disabled={downloading}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs font-semibold shadow-xs cursor-pointer transition-colors border border-slate-700 disabled:opacity-50"
-              title="Download PDF directly"
+              className={`flex items-center space-x-1.5 px-3 py-1.5 text-white rounded text-xs font-semibold shadow-xs cursor-pointer transition-colors border disabled:opacity-50 ${
+                downloadSuccess
+                  ? 'bg-emerald-700 hover:bg-emerald-600 border-emerald-600'
+                  : 'bg-slate-800 hover:bg-slate-700 border-slate-700'
+              }`}
+              title="Download PDF directly into Downloads folder"
             >
               {downloading ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : downloadSuccess ? (
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-300" />
               ) : (
                 <FileDown className="w-3.5 h-3.5" />
               )}
-              <span>{downloading ? 'Preparing...' : 'Download PDF'}</span>
+              <span>
+                {downloading
+                  ? 'Saving to Downloads...'
+                  : downloadSuccess
+                  ? 'Saved to Downloads!'
+                  : 'Download PDF'}
+              </span>
             </button>
 
             <button
